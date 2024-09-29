@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+data:
+  APP_PORT: {{ .Values.service.port | quote }}
+  {{- if .Values.grpcClusterIPService }}
+  GRPC_PORT: {{ .Values.grpcClusterIPService.port | quote }}
+  {{- end }}
+  {{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{ end }}
