@@ -12,9 +12,9 @@ spec:
       targetPort: {{ .Values.service.port }}
       protocol: TCP
       name: http
-    {{- if .Values.grpcClusterIPService }}
-    - port: {{ .Values.grpcClusterIPService.port }}
-      targetPort: {{ .Values.grpcClusterIPService.port }}
+    {{- if .Values.grpcService.enabled }}
+    - port: {{ .Values.grpcService.port }}
+      targetPort: {{ .Values.grpcService.port }}
       protocol: TCP
       name: grpc
     {{- end }}

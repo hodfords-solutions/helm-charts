@@ -1,16 +1,64 @@
+## @param name Application name
+##
+name: application-name
+
+## @param replicaCount Number of replicas, Ignored if hpa is enabled
+##
+replicaCount: 1
+
+## @param dockerConfig.enable Enable docker config
+## @param dockerConfig.data Docker config data
+##
+dockerConfig:
+  enabled: true
+  data: ""
+
+## @param service.type Main Service type, default is ClusterIP
+## @param service.port Main Service port, can check by APP_PORT env variable
+##
 service:
   type: ClusterIP
   port: 3000
 
+## @param grpcService.enabled Enable grpc service
+## @param grpcService.port GRPC service port, can check by GRPC_PORT env variable
+##
+grpcService:
+  enabled: false
+  port: 3001
+
+## @param image.repository Image repository url
+## @param image.pullPolicy Image pull policy
+## @param image.tag Image tag
+##
+image:
+  repository: ghcr.io/hodfords-solutions/api-gateway
+  pullPolicy: IfNotPresent
+  tag: build-11089985823
+
+## @param queue.enabled Enable queue service (a deployment don't expose any port)
+##
 queue:
-  enable: false
-
-healthCheck:
-  enable: false
-
-ingress:
   enabled: false
 
+## @param healthCheck.enabled Enable health check
+##
+healthCheck:
+  enabled: false
+
+## @param ingress.enabled Enable ingress
+##
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+  tls:
+  host: app.example.com
+
+## @param imagePullSecrets Extra Image pull secrets
+##
 imagePullSecrets: []
 
+## @param env Environment variables
+##
 env: []

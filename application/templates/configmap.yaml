@@ -7,8 +7,8 @@ metadata:
     {{- include "backend.labels" . | nindent 4 }}
 data:
   APP_PORT: {{ .Values.service.port | quote }}
-  {{- if .Values.grpcClusterIPService }}
-  GRPC_PORT: {{ .Values.grpcClusterIPService.port | quote }}
+  {{- if .Values.grpcService.enabled }}
+  GRPC_PORT: {{ .Values.grpcService.port | quote }}
   {{- end }}
   {{- range $key, $value := .Values.env }}
   {{ $key }}: {{ $value | quote }}

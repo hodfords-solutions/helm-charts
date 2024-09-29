@@ -1,5 +1,5 @@
 ---
-{{- if .Values.queue.enable }}
+{{- if .Values.queue.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,7 +27,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: SERVER_TYPE
@@ -39,7 +39,7 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          {{- if .Values.healthCheck.enable }}
+          {{- if .Values.healthCheck.enabled }}
           {{- with .Values.probes }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
