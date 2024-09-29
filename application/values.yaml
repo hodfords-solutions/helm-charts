@@ -49,7 +49,7 @@ healthCheck:
 ## @param ingress.enabled Enable ingress
 ##
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations:
   tls:
