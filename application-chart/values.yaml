@@ -1,0 +1,16 @@
+service:
+  type: ClusterIP
+  port: 3000
+
+queue:
+  enable: false
+
+healthCheck:
+  enable: false
+
+ingress:
+  enabled: false
+
+imagePullSecrets: []
+
+env: []
