@@ -19,7 +19,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.dockerConfig.enable }}
+      {{- if .Values.dockerConfig.enabled }}
       imagePullSecrets:
         - name: "{{ include "backend.fullname" . }}-dockerconfigjson"
       {{- else }}
@@ -30,7 +30,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
@@ -39,7 +39,7 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          {{- if .Values.healthCheck.enable }}
+          {{- if .Values.healthCheck.enabled }}
           {{- with .Values.probes }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
