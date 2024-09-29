@@ -10,7 +10,7 @@ replicaCount: 1
 ## @param dockerConfig.data Docker config data
 ##
 dockerConfig:
-  enabled: true
+  enabled: false
   data: ""
 
 ## @param service.type Main Service type, default is ClusterIP
