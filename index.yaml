@@ -13,6 +13,15 @@ entries:
     version: 0.1.1
   application:
   - apiVersion: v2
+    created: "2024-09-29T08:59:52.697922279Z"
+    description: A Helm chart for Kubernetes
+    digest: aa52173317600f6814c8d8ff0b868bcec6393519331bd5d26c6e46cbd667ad2a
+    name: application
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.1.4/application-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
     created: "2024-09-29T08:56:22.548803253Z"
     description: A Helm chart for Kubernetes
     digest: c1ebb85acc7abbb9a61355fb91e55265e9be3783396d377f57b6fdeaac8f49b4
@@ -31,4 +40,4 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.1.2/application-0.1.2.tgz
     version: 0.1.2
-generated: "2024-09-29T08:56:22.548819112Z"
+generated: "2024-09-29T08:59:52.697940032Z"
