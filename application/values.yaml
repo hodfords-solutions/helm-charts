@@ -54,6 +54,7 @@ ingress:
   annotations:
   tls:
   host: app.example.com
+  pathType: Prefix
 
 ## @param imagePullSecrets Extra Image pull secrets
 ##
