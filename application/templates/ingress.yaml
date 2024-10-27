@@ -32,5 +32,5 @@ spec:
                 port:
                   number: {{ .Values.service.port }}
             path: /
-            pathType: Prefix
+            pathType: {{ .Values.ingress.pathType }}
 {{- end }}
