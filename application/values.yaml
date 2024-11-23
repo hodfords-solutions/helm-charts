@@ -63,3 +63,15 @@ imagePullSecrets: []
 ## @param env Environment variables
 ##
 env: []
+
+externalSecrets: []
+#  - clusterStoreName: "cluster-name"
+#    isUseProperty: true
+#    refSecretName: "secret-name"
+#    secrets:
+#       DB_PASSWORD: db-password
+#  - clusterStoreName: "cluster-name2"
+#    isUseProperty: false
+#    refSecretName: "secret-name2"
+#    secrets:
+#      DB_PASSWORD: db-password
