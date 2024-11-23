@@ -1,7 +1,8 @@
+{{- $fullName := include "backend.fullname" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "backend.fullname" . }}
+  name: {{ $fullName }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
   annotations:
@@ -21,7 +22,7 @@ spec:
     spec:
       {{- if .Values.dockerConfig.enabled }}
       imagePullSecrets:
-        - name: "{{ include "backend.fullname" . }}-dockerconfigjson"
+        - name: "{{ $fullName }}-dockerconfigjson"
       {{- else }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -34,7 +35,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
-                name: {{ include "backend.fullname" . }}
+                name: {{ $fullName }}
+            {{- range $v:= .Values.externalSecrets }}
+            - secretRef:
+                name: {{ $fullName }}-{{ $v.refSecretName }}-secret
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
