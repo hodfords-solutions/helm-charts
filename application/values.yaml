@@ -53,8 +53,9 @@ ingress:
   className: "nginx"
   annotations:
   tls:
-  host: app.example.com
+  host:
   pathType: Prefix
+  hosts:
 
 ## @param imagePullSecrets Extra Image pull secrets
 ##
