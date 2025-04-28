@@ -43,8 +43,8 @@ spec:
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ .Values.service.port }}
+                  number: {{ $.Values.service.port }}
             path: /
-            pathType: {{ .Values.ingress.pathType }}
+            pathType: {{ $.Values.ingress.pathType }}
   {{- end }}
 {{- end }}
