@@ -10,11 +10,16 @@ persistent:
   storageClass: ''
   size: '3Gi'
 
-mongod:
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "1Gi"
-    limits:
-      cpu: "2"
-      memory: "4Gi"
+log:
+  persistent:
+    storageClass: ''
+    size: '1Gi'
+
+mongod: {}
+#  resources:
+#    requests:
+#      cpu: "500m"
+#      memory: "1Gi"
+#    limits:
+#      cpu: "2"
+#      memory: "4Gi"

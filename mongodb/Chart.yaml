@@ -2,4 +2,4 @@ apiVersion: v2
 name: mongodb
 description: A Helm chart for MongoDB
 type: application
-version: 0.0.2
+version: 0.0.3
