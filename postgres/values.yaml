@@ -1,0 +1,9 @@
+auth:
+  password: ""
+  username: "postgres"
+
+cnpg:
+  cluster:
+    imageName: "ghcr.io/cloudnative-pg/postgresql:18"
+    superuserSecret: postgres-secret
+

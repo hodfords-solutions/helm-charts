@@ -1,0 +1,44 @@
+---
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: {{ .Values.name }}
+spec:
+  members: {{ .Values.replicaCount }}
+  type: ReplicaSet
+  version: {{ .Values.version }}
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  users:
+    - name: {{ .Values.auth.username }}
+      db: admin
+      passwordSecretRef:
+        name: {{ .Values.name }}-mongodb-secret
+      roles:
+        - name: clusterAdmin
+          db: admin
+        - name: userAdminAnyDatabase
+          db: admin
+      scramCredentialsSecretName: my-scram
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+  statefulSet:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.name }}-sa
+          containers:
+            - name: mongod
+              {{- if .Values.mongod.resources }}
+              {{ toYaml .Values.mongod.resources | nindent 14 }}
+              {{- end }}
+      volumeClaimTemplates:
+        - metadata:
+            name: {{ .Values.name }}-data-volume
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: {{ .Values.persistent.size }}
+            storageClassName: {{ .Values.persistent.storageClass }}

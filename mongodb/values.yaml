@@ -1,0 +1,20 @@
+name: 'mongodb'
+replicaCount: 3
+version: '8.2.0'
+
+auth:
+  password: ''
+  username: 'root'
+
+persistent:
+  storageClass: ''
+  size: '3Gi'
+
+mongod:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
