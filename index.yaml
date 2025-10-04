@@ -94,4 +94,29 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.1.2/application-0.1.2.tgz
     version: 0.1.2
-generated: "2025-04-28T03:28:54.99336228Z"
+  mongodb:
+  - apiVersion: v2
+    created: "2025-10-04T07:17:24.863533041Z"
+    description: A Helm chart for MongoDB
+    digest: b224bb686c785e844bd77f0c8948705763b1e7ab8d089caa9ad479815832545e
+    name: mongodb
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/mongodb-0.0.1/mongodb-0.0.1.tgz
+    version: 0.0.1
+  postgres:
+  - apiVersion: v2
+    created: "2025-10-04T07:17:25.001183007Z"
+    dependencies:
+    - alias: cnpg
+      name: cluster
+      repository: https://cloudnative-pg.io/charts/
+      version: 0.3.1
+    description: A Helm chart for PostgreSQL
+    digest: 7062c3969181188d6c38541b2b8f72ce7e372233838a384c1d0017e677787d1a
+    name: postgres
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/postgres-0.0.1/postgres-0.0.1.tgz
+    version: 0.0.1
+generated: "2025-10-04T07:17:25.001231448Z"
