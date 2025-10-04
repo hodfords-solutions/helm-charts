@@ -35,7 +35,7 @@ spec:
               {{- end }}
       volumeClaimTemplates:
         - metadata:
-            name: {{ .Values.name }}-data-volume
+            name: data-volume
           spec:
             accessModes: [ "ReadWriteOnce" ]
             resources:
