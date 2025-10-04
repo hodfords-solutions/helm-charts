@@ -96,6 +96,15 @@ entries:
     version: 0.1.2
   mongodb:
   - apiVersion: v2
+    created: "2025-10-04T10:16:13.604989399Z"
+    description: A Helm chart for MongoDB
+    digest: 38284d4b0c264b80f062891572a1bfe8b7010009a1e85fd9c08076504e7b6fb4
+    name: mongodb
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/mongodb-0.0.4/mongodb-0.0.4.tgz
+    version: 0.0.4
+  - apiVersion: v2
     created: "2025-10-04T10:10:38.245822329Z"
     description: A Helm chart for MongoDB
     digest: da7cc7374440886fee81da1d70ab569f8961f12de34f05bcfc47f199a7ea2801
@@ -137,4 +146,4 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/postgres-0.0.1/postgres-0.0.1.tgz
     version: 0.0.1
-generated: "2025-10-04T10:10:38.245853598Z"
+generated: "2025-10-04T10:16:13.605029444Z"
