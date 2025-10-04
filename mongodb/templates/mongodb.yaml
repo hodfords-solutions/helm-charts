@@ -43,7 +43,7 @@ spec:
                 storage: {{ .Values.persistent.size }}
             storageClassName: {{ .Values.persistent.storageClass }}
         - metadata:
-            name: log-volume
+            name: logs-volume
           spec:
             accessModes: [ "ReadWriteOnce" ]
             resources:
