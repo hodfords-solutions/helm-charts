@@ -7,6 +7,9 @@ metadata:
     {{- include "backend.labels" . | nindent 4 }}
   annotations:
     reloader.stakater.com/auto: "true"
+    {{- if .Values.annotations }}
+    {{- toYaml .Values.annotations | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -19,6 +22,10 @@ spec:
  {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{- if .Values.dockerConfig.enabled }}
       imagePullSecrets:
