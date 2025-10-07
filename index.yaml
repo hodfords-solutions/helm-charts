@@ -13,6 +13,15 @@ entries:
     version: 0.1.1
   application:
   - apiVersion: v2
+    created: "2025-10-07T07:19:23.075416755Z"
+    description: A Helm chart for Kubernetes
+    digest: a6b29d265ef6c8b46e51e03273c23a9c5f75f7fc5cc52e02d7322490418f012f
+    name: application
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.2.4/application-0.2.4.tgz
+    version: 0.2.4
+  - apiVersion: v2
     created: "2025-04-28T03:28:54.993318188Z"
     description: A Helm chart for Kubernetes
     digest: e875c061e5448bb5eb16e3e2860cb0c62b5cdb829a2d0a16fec1868b8ca3bc09
@@ -155,4 +164,4 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/postgres-0.0.1/postgres-0.0.1.tgz
     version: 0.0.1
-generated: "2025-10-07T06:35:54.13824392Z"
+generated: "2025-10-07T07:19:23.075462851Z"
