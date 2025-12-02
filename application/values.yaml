@@ -65,6 +65,9 @@ imagePullSecrets: []
 ##
 env: []
 
+## @param envFrom Environment variables from configmaps
+envFrom: []
+
 externalSecrets: []
 #  - clusterStoreName: "cluster-name"
 #    isUseProperty: true

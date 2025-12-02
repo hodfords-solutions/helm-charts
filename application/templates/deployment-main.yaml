@@ -43,6 +43,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ $fullName }}
+            {{- range $v:= .Values.envFrom}}
+            - configMapRef:
+                name: {{ $v }}
+            {{- end }}
             {{- range $v:= .Values.externalSecrets }}
             - secretRef:
                 name: {{ $fullName }}-{{ $v.refSecretName }}-secret
