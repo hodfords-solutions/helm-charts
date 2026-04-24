@@ -15,11 +15,20 @@ log:
     storageClass: ''
     size: '1Gi'
 
-mongod: {}
-#  resources:
-#    requests:
-#      cpu: "500m"
-#      memory: "1Gi"
-#    limits:
-#      cpu: "2"
-#      memory: "4Gi"
+mongod:
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 256Mi
+
+mongodbAgent:
+  resources: {}
+    # limits:
+    #   cpu: 200m
+    #   memory: 256Mi
+    # requests:
+    #   cpu: 50m
+    #   memory: 128Mi

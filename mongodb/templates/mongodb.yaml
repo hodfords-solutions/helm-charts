@@ -32,8 +32,14 @@ spec:
           serviceAccountName: {{ .Values.name }}-sa
           containers:
             - name: mongod
-              {{- if .Values.mongod.resources }}
-              {{ toYaml .Values.mongod.resources | nindent 14 }}
+              {{- with .Values.mongod.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+            - name: mongodb-agent
+              {{- with .Values.mongodbAgent.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
               {{- end }}
       volumeClaimTemplates:
         - metadata:
