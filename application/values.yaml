@@ -68,6 +68,14 @@ env: []
 ## @param envFrom Environment variables from configmaps
 envFrom: []
 
+## @param nodeSelector Node labels for pod assignment
+##
+nodeSelector: {}
+
+## @param tolerations Tolerations for pod assignment
+##
+tolerations: []
+
 externalSecrets: []
 #  - clusterStoreName: "cluster-name"
 #    isUseProperty: true
