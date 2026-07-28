@@ -1,0 +1,147 @@
+name: 'my-collector'
+
+# Optional secret holding credentials referenced by the collector env (e.g. langfuse basic auth)
+secret:
+  enabled: false
+  # Defaults to <name>-secret
+  name: ''
+  data: {}
+    # AUTH_STRING: 'cGstbGYtLi4uOnNrLWxmLS4uLg=='
+
+collector:
+  enabled: true
+  # Namespace of the OpenTelemetryCollector resource (defaults to the release namespace)
+  namespace: ''
+
+  # deployment | daemonset | statefulset | sidecar
+  mode: 'deployment'
+  replicas: 1
+
+  # Override the collector image, e.g. otel/opentelemetry-collector-contrib:0.140.0
+  image: ''
+  imagePullPolicy: ''
+  serviceAccount: ''
+
+  labels: {}
+  annotations: {}
+  podAnnotations: {}
+
+  env: []
+    # - name: LANGFUSE_AUTH_STRING
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: langfuse-otel-auth
+    #       key: AUTH_STRING
+
+  envFrom: []
+    # - secretRef:
+    #     name: langfuse-otel-auth
+
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 256Mi
+
+  args: {}
+  ports: []
+  volumes: []
+  volumeMounts: []
+  volumeClaimTemplates: []
+
+  podSecurityContext: {}
+  securityContext: {}
+
+  priorityClassName: ''
+  terminationGracePeriodSeconds: ''
+
+  nodeSelector: {}
+    # kubernetes.io/os: linux
+
+  tolerations: []
+    # - key: 'observability'
+    #   operator: 'Equal'
+    #   value: 'true'
+    #   effect: 'NoSchedule'
+
+  affinity: {}
+  topologySpreadConstraints: []
+
+  autoscaler: {}
+    # minReplicas: 1
+    # maxReplicas: 5
+    # targetCPUUtilization: 80
+
+  ingress: {}
+  targetAllocator: {}
+  observability: {}
+
+  # Rendered as-is into spec.config
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+          http: {}
+    processors: {}
+    exporters:
+      debug:
+        verbosity: detailed
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [debug]
+
+# One entry per Instrumentation resource
+instrumentations:
+  - enabled: true
+    # Defaults to <name>-instrumentation (suffixed with the index from the second entry on)
+    name: ''
+    # Namespace of the Instrumentation resource - it must live in the namespace of
+    # the instrumented workloads (defaults to the release namespace)
+    namespace: ''
+    # Create the same Instrumentation in several namespaces (takes precedence over `namespace`)
+    namespaces: []
+      # - employer-dev
+      # - backend-dev
+
+    labels: {}
+    annotations: {}
+
+    exporter:
+      endpoint: 'http://my-collector-collector.opentelemetry.svc:4318'
+      tls: {}
+
+    propagators:
+      - tracecontext
+      - baggage
+      - b3
+
+    sampler:
+      type: always_on
+      # argument: '0.25'
+
+    resource: {}
+      # addK8sUIDAttributes: true
+      # resourceAttributes:
+      #   environment: dev
+
+    env: []
+      # - name: OTEL_EXPORTER_OTLP_TIMEOUT
+      #   value: '20'
+
+    # Per-language auto-instrumentation overrides
+    java: {}
+    nodejs: {}
+      # image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
+      # env:
+      #   - name: OTEL_NODE_ENABLED_INSTRUMENTATIONS
+      #     value: http,express
+    python: {}
+    dotnet: {}
+    go: {}
+    apacheHttpd: {}
+    nginx: {}

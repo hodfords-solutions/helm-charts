@@ -1,0 +1,117 @@
+{{- if .Values.collector.enabled }}
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: {{ include "name" . }}
+  {{- with .Values.collector.namespace }}
+  namespace: {{ . }}
+  {{- end }}
+  {{- with .Values.collector.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.collector.mode }}
+  mode: {{ . }}
+  {{- end }}
+  {{- if .Values.collector.replicas }}
+  replicas: {{ .Values.collector.replicas }}
+  {{- end }}
+  {{- with .Values.collector.image }}
+  image: {{ . }}
+  {{- end }}
+  {{- with .Values.collector.imagePullPolicy }}
+  imagePullPolicy: {{ . }}
+  {{- end }}
+  {{- with .Values.collector.serviceAccount }}
+  serviceAccount: {{ . }}
+  {{- end }}
+  {{- with .Values.collector.priorityClassName }}
+  priorityClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.collector.terminationGracePeriodSeconds }}
+  terminationGracePeriodSeconds: {{ . }}
+  {{- end }}
+  {{- with .Values.collector.args }}
+  args:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.ports }}
+  ports:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.env }}
+  env:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.envFrom }}
+  envFrom:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.autoscaler }}
+  autoscaler:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.ingress }}
+  ingress:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.volumes }}
+  volumes:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.volumeMounts }}
+  volumeMounts:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.podAnnotations }}
+  podAnnotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.podSecurityContext }}
+  podSecurityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.securityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.nodeSelector }}
+  nodeSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.tolerations }}
+  tolerations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.affinity }}
+  affinity:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.topologySpreadConstraints }}
+  topologySpreadConstraints:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.targetAllocator }}
+  targetAllocator:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collector.observability }}
+  observability:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  config:
+    {{- toYaml .Values.collector.config | nindent 4 }}
+{{- end }}
