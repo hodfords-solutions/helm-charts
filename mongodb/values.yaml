@@ -2,18 +2,31 @@ name: 'mongodb'
 replicaCount: 3
 version: '8.2.0'
 
+# Extra labels/annotations for the MongoDBCommunity resource
+labels: {}
+annotations: {}
+
 auth:
   password: ''
   username: 'root'
+  scramCredentialsSecretName: 'my-scram'
 
 persistent:
   storageClass: ''
   size: '3Gi'
+  accessModes:
+    - ReadWriteOnce
 
 log:
   persistent:
     storageClass: ''
     size: '1Gi'
+    accessModes:
+      - ReadWriteOnce
+
+# Extra mongod configuration, merged into spec.additionalMongodConfig
+additionalMongodConfig:
+  storage.wiredTiger.engineConfig.journalCompressor: zlib
 
 mongod:
   resources: {}
@@ -23,6 +36,9 @@ mongod:
     # requests:
     #   cpu: 100m
     #   memory: 256Mi
+  securityContext: {}
+    # allowPrivilegeEscalation: false
+    # readOnlyRootFilesystem: false
 
 mongodbAgent:
   resources: {}
@@ -32,3 +48,49 @@ mongodbAgent:
     # requests:
     #   cpu: 50m
     #   memory: 128Mi
+  securityContext: {}
+
+# Override the headless service name (defaults to the resource name via the operator)
+serviceName: ''
+
+podAnnotations: {}
+podLabels: {}
+
+imagePullSecrets: []
+  # - name: my-registry-secret
+
+podSecurityContext: {}
+  # fsGroup: 2000
+  # runAsNonRoot: true
+  # runAsUser: 2000
+
+priorityClassName: ''
+terminationGracePeriodSeconds: ''
+
+nodeSelector: {}
+  # kubernetes.io/os: linux
+
+tolerations: []
+  # - key: 'database'
+  #   operator: 'Equal'
+  #   value: 'true'
+  #   effect: 'NoSchedule'
+
+affinity: {}
+  # podAntiAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     - labelSelector:
+  #         matchExpressions:
+  #           - key: app
+  #             operator: In
+  #             values:
+  #               - mongodb-svc
+  #       topologyKey: kubernetes.io/hostname
+
+topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: ScheduleAnyway
+  #   labelSelector:
+  #     matchLabels:
+  #       app: mongodb-svc

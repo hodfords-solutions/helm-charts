@@ -3,6 +3,14 @@ apiVersion: mongodbcommunity.mongodb.com/v1
 kind: MongoDBCommunity
 metadata:
   name: {{ .Values.name }}
+  {{- with .Values.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   members: {{ .Values.replicaCount }}
   type: ReplicaSet
@@ -22,18 +30,50 @@ spec:
           db: admin
         - name: readWriteAnyDatabase
           db: admin
-      scramCredentialsSecretName: my-scram
+      scramCredentialsSecretName: {{ .Values.auth.scramCredentialsSecretName }}
   additionalMongodConfig:
-    storage.wiredTiger.engineConfig.journalCompressor: zlib
+    {{- toYaml .Values.additionalMongodConfig | nindent 4 }}
   statefulSet:
     spec:
+      {{- with .Values.serviceName }}
+      serviceName: {{ . }}
+      {{- end }}
       template:
+        {{- if or .Values.podAnnotations .Values.podLabels }}
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.podLabels }}
+          labels:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
         spec:
           serviceAccountName: {{ .Values.name }}-sa
+          {{- with .Values.priorityClassName }}
+          priorityClassName: {{ . }}
+          {{- end }}
+          {{- with .Values.terminationGracePeriodSeconds }}
+          terminationGracePeriodSeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
             - name: mongod
               {{- with .Values.mongod.resources }}
               resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with .Values.mongod.securityContext }}
+              securityContext:
                 {{- toYaml . | nindent 16 }}
               {{- end }}
             - name: mongodb-agent
@@ -41,11 +81,31 @@ spec:
               resources:
                 {{- toYaml . | nindent 16 }}
               {{- end }}
+              {{- with .Values.mongodbAgent.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.topologySpreadConstraints }}
+          topologySpreadConstraints:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
       volumeClaimTemplates:
         - metadata:
             name: data-volume
           spec:
-            accessModes: [ "ReadWriteOnce" ]
+            accessModes: {{ .Values.persistent.accessModes }}
             resources:
               requests:
                 storage: {{ .Values.persistent.size }}
@@ -53,7 +113,7 @@ spec:
         - metadata:
             name: logs-volume
           spec:
-            accessModes: [ "ReadWriteOnce" ]
+            accessModes: {{ .Values.log.persistent.accessModes }}
             resources:
               requests:
                 storage: {{ .Values.log.persistent.size }}
