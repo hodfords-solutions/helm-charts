@@ -1,0 +1,76 @@
+{{/*
+Renders the metrics list of an HPA from a config map (targetCPUUtilizationPercentage,
+targetMemoryUtilizationPercentage and extra raw metrics in autoscaling/v2 format).
+*/}}
+{{- define "hpa.metrics" -}}
+{{- if .targetCPUUtilizationPercentage }}
+- type: Resource
+  resource:
+    name: cpu
+    target:
+      type: Utilization
+      averageUtilization: {{ .targetCPUUtilizationPercentage }}
+{{- end }}
+{{- if .targetMemoryUtilizationPercentage }}
+- type: Resource
+  resource:
+    name: memory
+    target:
+      type: Utilization
+      averageUtilization: {{ .targetMemoryUtilizationPercentage }}
+{{- end }}
+{{- with .metrics }}
+{{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.hpa.enabled }}
+{{- $metrics := include "hpa.metrics" .Values.hpa | trim }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "backend.fullname" . }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  {{- if $metrics }}
+  metrics:
+    {{- $metrics | nindent 4 }}
+  {{- end }}
+  {{- with .Values.hpa.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+{{- if and .Values.queue.enabled .Values.queueHpa.enabled }}
+---
+{{- $queueMetrics := include "hpa.metrics" .Values.queueHpa | trim }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "queue.name" . }}
+  labels:
+    {{- include "queue.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "queue.name" . }}
+  minReplicas: {{ .Values.queueHpa.minReplicas }}
+  maxReplicas: {{ .Values.queueHpa.maxReplicas }}
+  {{- if $queueMetrics }}
+  metrics:
+    {{- $queueMetrics | nindent 4 }}
+  {{- end }}
+  {{- with .Values.queueHpa.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

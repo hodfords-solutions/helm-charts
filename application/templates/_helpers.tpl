@@ -39,7 +39,7 @@ Create chart name and version as used by the chart label.
 Create chart name and version as used by the chart label.
 */}}
 {{- define "queue.chart" -}}
-{{- printf "%s-%s" .Values.queue.name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s" (include "queue.name" .) .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 

@@ -11,7 +11,9 @@ metadata:
     {{- toYaml .Values.annotations | nindent 4 }}
     {{- end }}
 spec:
+  {{- if not .Values.hpa.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "backend.selectorLabels" . | nindent 6 }}
@@ -64,6 +66,10 @@ spec:
           {{- with .Values.probes }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

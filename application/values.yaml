@@ -37,9 +37,57 @@ image:
   tag: build-11089985823
 
 ## @param queue.enabled Enable queue service (a deployment don't expose any port)
+## @param queue.replicaCount Number of queue replicas, falls back to replicaCount, ignored if queueHpa is enabled
 ##
 queue:
   enabled: false
+  replicaCount:
+
+## @param resources Resource requests/limits for the main container
+## HPA on cpu/memory requires requests to be set
+##
+resources: {}
+  # limits:
+  #   cpu: 500m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 256Mi
+
+## @param hpa.enabled Enable HorizontalPodAutoscaler for the main deployment
+## @param hpa.minReplicas Minimum number of replicas
+## @param hpa.maxReplicas Maximum number of replicas
+## @param hpa.targetCPUUtilizationPercentage Target average CPU utilization, set to null to disable
+## @param hpa.targetMemoryUtilizationPercentage Target average memory utilization, set to null to disable
+## @param hpa.metrics Extra raw metrics (autoscaling/v2 format), appended to the generated ones
+## @param hpa.behavior Scaling behavior (autoscaling/v2 format)
+##
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage:
+  metrics: []
+  behavior: {}
+  # behavior:
+  #   scaleDown:
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #       - type: Percent
+  #         value: 100
+  #         periodSeconds: 15
+
+## @param queueHpa HorizontalPodAutoscaler for the queue deployment, same schema as hpa
+##
+queueHpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage:
+  metrics: []
+  behavior: {}
 
 ## @param healthCheck.enabled Enable health check
 ##
