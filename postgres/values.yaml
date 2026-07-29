@@ -2,6 +2,17 @@ auth:
   password: ""
   username: "postgres"
 
+# Extra PodDisruptionBudget for the cluster pods.
+# The CloudNativePG operator already manages PDBs for a Cluster (see
+# cnpg.cluster.enablePDB); enable this only when you need an additional,
+# stricter budget. minAvailable takes precedence over maxUnavailable.
+pdb:
+  enabled: false
+  minAvailable:
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: ''
+  selectorLabels: {}
+
 cnpg:
   cluster:
     imageName: "ghcr.io/cloudnative-pg/postgresql:18"

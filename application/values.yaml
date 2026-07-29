@@ -89,6 +89,26 @@ queueHpa:
   metrics: []
   behavior: {}
 
+## @param pdb.enabled Enable PodDisruptionBudget for the main deployment
+## @param pdb.minAvailable Minimum available pods, takes precedence over maxUnavailable
+## @param pdb.maxUnavailable Maximum unavailable pods, ignored if minAvailable is set
+## @param pdb.unhealthyPodEvictionPolicy Eviction policy for unhealthy pods (IfHealthyBudget/AlwaysAllow), k8s >= 1.27
+## Only makes sense with more than one replica, otherwise voluntary evictions are blocked
+##
+pdb:
+  enabled: false
+  minAvailable:
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy:
+
+## @param queuePdb PodDisruptionBudget for the queue deployment, same schema as pdb
+##
+queuePdb:
+  enabled: false
+  minAvailable:
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy:
+
 ## @param healthCheck.enabled Enable health check
 ##
 healthCheck:

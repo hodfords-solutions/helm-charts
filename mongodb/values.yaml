@@ -53,6 +53,17 @@ mongodbAgent:
 # Override the headless service name (defaults to the resource name via the operator)
 serviceName: ''
 
+# PodDisruptionBudget for the replica set pods.
+# minAvailable takes precedence over maxUnavailable (only one may be set).
+# selectorLabels overrides the default selector, which matches the pod label the
+# community operator applies: app: <serviceName|name-svc>
+pdb:
+  enabled: false
+  minAvailable: 2
+  maxUnavailable:
+  unhealthyPodEvictionPolicy: ''
+  selectorLabels: {}
+
 podAnnotations: {}
 podLabels: {}
 

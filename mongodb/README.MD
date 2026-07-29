@@ -32,6 +32,11 @@ This Helm chart deploys a MongoDB database on a Kubernetes cluster using MCK (Mo
 | `mongodbAgent.resources` | object | `{}` | Resource requests/limits of the `mongodb-agent` container |
 | `mongodbAgent.securityContext` | object | `{}` | Security context of the `mongodb-agent` container |
 | `serviceName` | string | `""` | Override the StatefulSet headless service name |
+| `pdb.enabled` | bool | `false` | Create a PodDisruptionBudget for the replica set pods |
+| `pdb.minAvailable` | int/string | `2` | Minimum available pods, takes precedence over `maxUnavailable` |
+| `pdb.maxUnavailable` | int/string | `nil` | Maximum unavailable pods, ignored when `minAvailable` is set |
+| `pdb.unhealthyPodEvictionPolicy` | string | `""` | `IfHealthyBudget` or `AlwaysAllow` (Kubernetes >= 1.27) |
+| `pdb.selectorLabels` | object | `{}` | Override the pod selector, defaults to `app: <serviceName\|name-svc>` |
 | `podAnnotations` | object | `{}` | Annotations added to the pods |
 | `podLabels` | object | `{}` | Labels added to the pods |
 | `imagePullSecrets` | list | `[]` | Image pull secrets |

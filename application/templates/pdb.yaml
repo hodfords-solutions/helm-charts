@@ -1,0 +1,52 @@
+{{/*
+Renders the disruption budget of a PDB from a config map (minAvailable takes
+precedence over maxUnavailable, only one of them may be set on a PDB).
+*/}}
+{{- define "pdb.budget" -}}
+{{- if .minAvailable }}
+minAvailable: {{ .minAvailable }}
+{{- else if .maxUnavailable }}
+maxUnavailable: {{ .maxUnavailable }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.pdb.enabled }}
+{{- $budget := include "pdb.budget" .Values.pdb | trim }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  {{- with $budget }}
+  {{- . | nindent 2 }}
+  {{- end }}
+  {{- with .Values.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+{{- end }}
+
+{{- if and .Values.queue.enabled .Values.queuePdb.enabled }}
+---
+{{- $queueBudget := include "pdb.budget" .Values.queuePdb | trim }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "queue.name" . }}
+  labels:
+    {{- include "queue.labels" . | nindent 4 }}
+spec:
+  {{- with $queueBudget }}
+  {{- . | nindent 2 }}
+  {{- end }}
+  {{- with .Values.queuePdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "queue.selectorLabels" . | nindent 6 }}
+{{- end }}

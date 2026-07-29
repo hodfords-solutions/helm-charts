@@ -1,0 +1,24 @@
+{{- if .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  # suffixed with -pdb so it never collides with the PDBs the CloudNativePG
+  # operator creates for the cluster (<cluster> and <cluster>-primary)
+  name: {{ include "cluster.fullname" . }}-pdb
+spec:
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- else if .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+  {{- with .Values.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- if .Values.pdb.selectorLabels }}
+      {{- toYaml .Values.pdb.selectorLabels | nindent 6 }}
+      {{- else }}
+      cnpg.io/cluster: {{ include "cluster.fullname" . }}
+      {{- end }}
+{{- end }}

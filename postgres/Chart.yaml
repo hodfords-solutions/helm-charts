@@ -2,7 +2,7 @@ apiVersion: v2
 name: postgres
 description: A Helm chart for PostgreSQL
 type: application
-version: 0.0.1
+version: 0.0.2
 dependencies:
   - name: cluster
     alias: cnpg
