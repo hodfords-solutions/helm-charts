@@ -13,6 +13,15 @@ entries:
     version: 0.1.1
   application:
   - apiVersion: v2
+    created: "2026-07-29T14:24:55.864386846Z"
+    description: A Helm chart for Kubernetes
+    digest: 242ac5556de4459301ae53564dc02aa2a4a50f08935c76a14c7f7cd83ea38f83
+    name: application
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.4.0/application-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v2
     created: "2026-07-29T06:44:42.9082591Z"
     description: A Helm chart for Kubernetes
     digest: 671366273be4884c6a0483aa99e4d2a17bfc880d3f7f15a781cde2d7d35c712b
@@ -132,6 +141,15 @@ entries:
     version: 0.1.2
   mongodb:
   - apiVersion: v2
+    created: "2026-07-29T14:24:56.103571024Z"
+    description: A Helm chart for MongoDB
+    digest: 4b29a09d893cc3e36baf7e25537f1524f776c755e3215f02f3b5345352a3b437
+    name: mongodb
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/mongodb-0.0.8/mongodb-0.0.8.tgz
+    version: 0.0.8
+  - apiVersion: v2
     created: "2026-07-28T03:29:25.056797076Z"
     description: A Helm chart for MongoDB
     digest: 28a8e7f0aba2b21558e67c9ba8971bcfd59aca9f095d1b325bca3a63e101cb70
@@ -206,6 +224,20 @@ entries:
     version: 0.0.1
   postgres:
   - apiVersion: v2
+    created: "2026-07-29T14:24:56.347389467Z"
+    dependencies:
+    - alias: cnpg
+      name: cluster
+      repository: https://cloudnative-pg.io/charts/
+      version: 0.3.1
+    description: A Helm chart for PostgreSQL
+    digest: 8d07816ca4613ac505d1bed29abeb5b1549564187d23a680dcb4c2ae759f64ec
+    name: postgres
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/postgres-0.0.2/postgres-0.0.2.tgz
+    version: 0.0.2
+  - apiVersion: v2
     created: "2025-10-04T07:17:25.001183007Z"
     dependencies:
     - alias: cnpg
@@ -219,4 +251,4 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/postgres-0.0.1/postgres-0.0.1.tgz
     version: 0.0.1
-generated: "2026-07-29T06:44:42.90834997Z"
+generated: "2026-07-29T14:24:56.347751342Z"
