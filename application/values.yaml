@@ -27,6 +27,34 @@ grpcService:
   enabled: false
   port: 3001
 
+## @param services Extra services next to the main one, each can expose several ports
+## @param services[].name Name suffix, appended to the release full name
+## @param services[].type Service type, default is ClusterIP
+## @param services[].annotations Service annotations
+## @param services[].ports[].name Port name, must be unique across all services
+## @param services[].ports[].port Service port
+## @param services[].ports[].targetPort Container port, defaults to the service port
+## @param services[].ports[].protocol Port protocol, default is TCP
+## @param services[].ports[].nodePort Node port, only for NodePort/LoadBalancer services
+## @param services[].ports[].appProtocol Application protocol hint, e.g. http, grpc
+## Every port is also declared as a container port on the main deployment, deduplicated
+## by name and by port/protocol
+##
+services: []
+#  - name: metrics
+#    ports:
+#      - name: metrics
+#        port: 9090
+#      - name: pprof
+#        port: 6060
+#  - name: public
+#    type: LoadBalancer
+#    annotations: {}
+#    ports:
+#      - name: https
+#        port: 443
+#        targetPort: 3000
+
 ## @param image.repository Image repository url
 ## @param image.pullPolicy Image pull policy
 ## @param image.tag Image tag
@@ -115,6 +143,10 @@ healthCheck:
   enabled: false
 
 ## @param ingress.enabled Enable ingress
+## @param ingress.serviceName Service to route to, name suffix or full service name,
+## defaults to the first service
+## @param ingress.servicePort Port to route to, port name or number, defaults to the
+## first port of the selected service
 ##
 ingress:
   enabled: false
@@ -124,6 +156,8 @@ ingress:
   host:
   pathType: Prefix
   hosts:
+  serviceName:
+  servicePort:
 
 ## @param imagePullSecrets Extra Image pull secrets
 ##

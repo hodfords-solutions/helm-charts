@@ -83,3 +83,104 @@ Queue selector labels
 app.kubernetes.io/name: {{ include "queue.name" . }}
 app.kubernetes.io/instance: {{ printf "%s-queue" .Release.Name }}
 {{- end }}
+
+{{/*
+Normalized list of services, rendered as a yaml dict with an "items" key so that
+consumers can read it back with fromYaml:
+
+  {{- $services := (include "backend.services" . | fromYaml).items }}
+
+Each item is a dict with name/type/annotations/ports. The first one is the main
+service built from service/grpcService, the extra ones come from .Values.services and
+are suffixed with their own name.
+*/}}
+{{- define "backend.services" -}}
+{{- $fullName := include "backend.fullname" . -}}
+{{- $ports := list (dict "name" "http" "port" .Values.service.port "protocol" "TCP") -}}
+{{- if .Values.grpcService.enabled -}}
+{{- $ports = append $ports (dict "name" "grpc" "port" .Values.grpcService.port "protocol" "TCP") -}}
+{{- end -}}
+{{- $services := list (dict
+    "name" $fullName
+    "type" .Values.service.type
+    "annotations" (default dict .Values.service.annotations)
+    "ports" $ports) -}}
+{{- range $svc := .Values.services -}}
+{{- $services = append $services (dict
+    "name" (printf "%s-%s" $fullName $svc.name | trunc 63 | trimSuffix "-")
+    "type" (default "ClusterIP" $svc.type)
+    "annotations" (default dict $svc.annotations)
+    "ports" (default list $svc.ports)) -}}
+{{- end -}}
+{{- toYaml (dict "items" $services) -}}
+{{- end }}
+
+{{/*
+Container port of a service port: the target port when it is a number, the service
+port itself when the target port is a named reference (or not set at all).
+*/}}
+{{- define "backend.containerPort" -}}
+{{- if and (hasKey . "targetPort") (kindIs "float64" .targetPort) -}}
+{{- .targetPort -}}
+{{- else if and (hasKey . "targetPort") (kindIs "int" .targetPort) -}}
+{{- .targetPort -}}
+{{- else -}}
+{{- .port -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Container ports for the main deployment, deduplicated by name and by port/protocol
+across every service.
+*/}}
+{{- define "backend.containerPorts" -}}
+{{- $services := (include "backend.services" . | fromYaml).items -}}
+{{- $seenNames := dict -}}
+{{- $seenPorts := dict -}}
+{{- range $svc := $services -}}
+{{- range $port := $svc.ports -}}
+{{- $protocol := default "TCP" $port.protocol -}}
+{{- $containerPort := include "backend.containerPort" $port -}}
+{{- $portKey := printf "%s/%s" $containerPort $protocol -}}
+{{- if and (not (hasKey $seenNames $port.name)) (not (hasKey $seenPorts $portKey)) -}}
+{{- $_ := set $seenNames $port.name true -}}
+{{- $_ := set $seenPorts $portKey true }}
+- name: {{ $port.name }}
+  containerPort: {{ $containerPort }}
+  protocol: {{ $protocol }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Service and port the ingress routes to: the first port of the first service by
+default, overridable with ingress.serviceName / ingress.servicePort. Rendered as a
+yaml dict with name/port keys.
+*/}}
+{{- define "backend.ingressBackend" -}}
+{{- $services := (include "backend.services" . | fromYaml).items -}}
+{{- $service := first $services -}}
+{{- with .Values.ingress.serviceName -}}
+{{- $name := . -}}
+{{- range $svc := $services -}}
+{{- if or (eq $svc.name $name) (hasSuffix (printf "-%s" $name) $svc.name) -}}
+{{- $service = $svc -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $port := (first $service.ports).port -}}
+{{- with .Values.ingress.servicePort -}}
+{{- if kindIs "string" . -}}
+{{- $portName := . -}}
+{{- range $p := $service.ports -}}
+{{- if eq $p.name $portName -}}
+{{- $port = $p.port -}}
+{{- end -}}
+{{- end -}}
+{{- else -}}
+{{- $port = . -}}
+{{- end -}}
+{{- end -}}
+{{- toYaml (dict "name" $service.name "port" $port) -}}
+{{- end }}

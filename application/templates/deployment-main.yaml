@@ -53,15 +53,10 @@ spec:
             - secretRef:
                 name: {{ $fullName }}-{{ $v.refSecretName }}-secret
             {{- end }}
+          {{- with include "backend.containerPorts" . | trim }}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
-            {{- if .Values.grpcService.enabled }}
-            - name: grpc
-              containerPort: {{ .Values.grpcService.port }}
-              protocol: TCP
-            {{- end }}
+            {{- . | nindent 12 }}
+          {{- end }}
           {{- if .Values.healthCheck.enabled }}
           {{- with .Values.probes }}
           {{- toYaml . | nindent 10 }}

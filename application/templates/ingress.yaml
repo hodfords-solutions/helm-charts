@@ -1,9 +1,9 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "backend.fullname" . -}}
+{{- $backend := include "backend.ingressBackend" . | fromYaml -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $fullName }}
+  name: {{ include "backend.fullname" . }}
   labels:
     {{- include "backend.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
@@ -29,9 +29,9 @@ spec:
         paths:
           - backend:
               service:
-                name: {{ $fullName }}
+                name: {{ $backend.name }}
                 port:
-                  number: {{ .Values.service.port }}
+                  number: {{ $backend.port }}
             path: /
             pathType: {{ .Values.ingress.pathType }}
   {{- end }}
@@ -41,9 +41,9 @@ spec:
         paths:
           - backend:
               service:
-                name: {{ $fullName }}
+                name: {{ $backend.name }}
                 port:
-                  number: {{ $.Values.service.port }}
+                  number: {{ $backend.port }}
             path: /
             pathType: {{ $.Values.ingress.pathType }}
   {{- end }}

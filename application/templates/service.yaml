@@ -1,23 +1,31 @@
+{{- $services := (include "backend.services" . | fromYaml).items }}
+{{- range $svc := $services }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "backend.fullname" . }}
+  name: {{ $svc.name }}
   labels:
-    {{- include "backend.labels" . | nindent 4 }}
+    {{- include "backend.labels" $ | nindent 4 }}
+  {{- with $svc.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ $svc.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.port }}
-      protocol: TCP
-      name: http
-    {{- if .Values.grpcService.enabled }}
-    - port: {{ .Values.grpcService.port }}
-      targetPort: {{ .Values.grpcService.port }}
-      protocol: TCP
-      name: grpc
+    {{- range $port := $svc.ports }}
+    - port: {{ $port.port }}
+      targetPort: {{ default $port.port $port.targetPort }}
+      protocol: {{ default "TCP" $port.protocol }}
+      name: {{ $port.name }}
+      {{- with $port.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+      {{- with $port.appProtocol }}
+      appProtocol: {{ . }}
+      {{- end }}
     {{- end }}
   selector:
-    {{- include "backend.selectorLabels" . | nindent 4 }}
-
+    {{- include "backend.selectorLabels" $ | nindent 4 }}
+{{- end }}
