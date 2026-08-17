@@ -154,6 +154,86 @@ across every service.
 {{- end }}
 
 {{/*
+Name of the secret backing a secretMounts entry: an external secret created by this
+chart when secretName is not set, an already existing secret otherwise.
+*/}}
+{{- define "backend.secretMountName" -}}
+{{- $fullName := include "backend.fullname" .context -}}
+{{- with .mount.externalSecret -}}
+{{- printf "%s-%s-secret" $fullName . -}}
+{{- else -}}
+{{- .mount.secretName -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Volume name of a secretMounts entry, indexed so that the same secret can be mounted
+more than once.
+*/}}
+{{- define "backend.secretMountVolume" -}}
+{{- printf "secret-%d-%s" (int .index) (include "backend.secretMountName" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Volumes for the secret files managed by this chart and for every secretMounts entry.
+*/}}
+{{- define "backend.volumes" -}}
+{{- $fullName := include "backend.fullname" . -}}
+{{- if and .Values.secretFiles.enabled .Values.secretFiles.files }}
+- name: secret-files
+  secret:
+    secretName: {{ $fullName }}-files
+    {{- with .Values.secretFiles.defaultMode }}
+    defaultMode: {{ . }}
+    {{- end }}
+{{- end }}
+{{- range $i, $mount := .Values.secretMounts }}
+- name: {{ include "backend.secretMountVolume" (dict "index" $i "mount" $mount "context" $) }}
+  secret:
+    secretName: {{ include "backend.secretMountName" (dict "mount" $mount "context" $) }}
+    {{- with $mount.defaultMode }}
+    defaultMode: {{ . }}
+    {{- end }}
+    {{- if hasKey $mount "optional" }}
+    optional: {{ $mount.optional }}
+    {{- end }}
+    {{- with $mount.items }}
+    items:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- with .Values.extraVolumes }}
+{{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Volume mounts matching "backend.volumes".
+*/}}
+{{- define "backend.volumeMounts" -}}
+{{- if and .Values.secretFiles.enabled .Values.secretFiles.files }}
+- name: secret-files
+  mountPath: {{ .Values.secretFiles.mountPath }}
+  readOnly: true
+{{- end }}
+{{- range $i, $mount := .Values.secretMounts }}
+- name: {{ include "backend.secretMountVolume" (dict "index" $i "mount" $mount "context" $) }}
+  mountPath: {{ $mount.mountPath }}
+  {{- with $mount.subPath }}
+  subPath: {{ . }}
+  {{- end }}
+  {{- if hasKey $mount "readOnly" }}
+  readOnly: {{ $mount.readOnly }}
+  {{- else }}
+  readOnly: true
+  {{- end }}
+{{- end }}
+{{- with .Values.extraVolumeMounts }}
+{{ toYaml . }}
+{{- end }}
+{{- end }}
+
+{{/*
 Service and port the ingress routes to: the first port of the first service by
 default, overridable with ingress.serviceName / ingress.servicePort. Rendered as a
 yaml dict with name/port keys.

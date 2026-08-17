@@ -178,6 +178,48 @@ nodeSelector: {}
 ##
 tolerations: []
 
+## @param secretFiles.enabled Render `secretFiles.files` into a chart-managed Secret and mount it
+## @param secretFiles.mountPath Directory the files are mounted into
+## @param secretFiles.defaultMode File permissions, decimal (0644 is 420, 0400 is 256)
+## @param secretFiles.files Map of file name to file content, content is templated with tpl
+##
+secretFiles:
+  enabled: false
+  mountPath: /etc/secrets
+  defaultMode:
+  files: {}
+  #  firebase.json: |-
+  #    {"type": "service_account"}
+  #  id_rsa: |-
+  #    {{ .Values.privateKey }}
+
+## @param secretMounts Mount existing secrets as files
+## @param secretMounts[].secretName Name of an existing secret
+## @param secretMounts[].externalSecret refSecretName of an `externalSecrets` entry, takes
+## precedence over secretName and resolves to the secret created by this chart
+## @param secretMounts[].mountPath Path the secret is mounted at, a directory unless subPath is set
+## @param secretMounts[].subPath Mount a single file from the secret instead of the whole directory
+## @param secretMounts[].readOnly Mount read only, default is true
+## @param secretMounts[].defaultMode File permissions, decimal (0644 is 420, 0400 is 256)
+## @param secretMounts[].optional Do not block pod startup when the secret is missing
+## @param secretMounts[].items Project only selected keys, `key`/`path` pairs
+##
+secretMounts: []
+#  - secretName: tls-cert
+#    mountPath: /etc/certs
+#  - externalSecret: secret-name
+#    mountPath: /etc/app/db-password
+#    subPath: DB_PASSWORD
+#    items:
+#      - key: DB_PASSWORD
+#        path: DB_PASSWORD
+
+## @param extraVolumes Extra volumes for both deployments
+## @param extraVolumeMounts Extra volume mounts for both containers
+##
+extraVolumes: []
+extraVolumeMounts: []
+
 externalSecrets: []
 #  - clusterStoreName: "cluster-name"
 #    isUseProperty: true
