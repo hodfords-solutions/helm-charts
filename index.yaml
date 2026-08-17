@@ -260,4 +260,25 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/postgres-0.0.1/postgres-0.0.1.tgz
     version: 0.0.1
-generated: "2026-08-10T04:02:48.945672772Z"
+  rspamd:
+  - apiVersion: v2
+    appVersion: 4.1.5
+    created: "2026-08-17T03:47:11.476006964Z"
+    description: A Helm chart for Rspamd
+    digest: 605805e9fda607b3f676742c229d49eb51c4ff875bf4bb2fccc75feef130e15e
+    home: https://rspamd.com
+    keywords:
+    - rspamd
+    - spam
+    - milter
+    - proxy
+    - controller
+    name: rspamd
+    sources:
+    - https://hub.docker.com/r/rspamd/rspamd
+    - https://github.com/rspamd/rspamd
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/rspamd-0.0.1/rspamd-0.0.1.tgz
+    version: 0.0.1
+generated: "2026-08-17T03:47:11.47607449Z"
