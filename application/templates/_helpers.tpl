@@ -168,10 +168,12 @@ chart when secretName is not set, an already existing secret otherwise.
 
 {{/*
 Volume name of a secretMounts entry, indexed so that the same secret can be mounted
-more than once.
+more than once. Secret names may contain dots, volume names must be DNS-1123 labels,
+so every character outside [a-z0-9-] is folded into a dash.
 */}}
 {{- define "backend.secretMountVolume" -}}
-{{- printf "secret-%d-%s" (int .index) (include "backend.secretMountName" .) | trunc 63 | trimSuffix "-" -}}
+{{- $name := regexReplaceAll "[^a-z0-9]+" (include "backend.secretMountName" . | lower) "-" -}}
+{{- printf "secret-%d-%s" (int .index) $name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
