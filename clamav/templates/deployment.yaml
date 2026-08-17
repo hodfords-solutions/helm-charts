@@ -1,0 +1,187 @@
+{{- include "clamav.validateFreshclam" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clamav.fullname" . }}
+  labels:
+    {{- include "clamav.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.hpa.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clamav.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ toYaml (dict "clamd" .Values.clamd "freshclam" .Values.freshclam "milter" .Values.milter) | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "clamav.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "clamav.serviceAccountName" . }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.freshclam.existingSecret }}
+      initContainers:
+        - name: render-freshclam-config
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              cp /freshclam-template/freshclam.conf /freshclam-config/freshclam.conf
+              printf 'HTTPProxyPassword %s\n' "$FRESHCLAM_PROXY_PASSWORD" >> /freshclam-config/freshclam.conf
+          env:
+            - name: FRESHCLAM_PROXY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.freshclam.existingSecret }}
+                  key: {{ .Values.freshclam.existingSecretPasswordKey }}
+          volumeMounts:
+            - name: freshclam-config
+              mountPath: /freshclam-template
+              readOnly: true
+            - name: freshclam-config-rendered
+              mountPath: /freshclam-config
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: CLAMAV_NO_CLAMD
+              value: 'false'
+            - name: CLAMAV_NO_FRESHCLAMD
+              value: {{ ternary "false" "true" .Values.freshclam.enabled | quote }}
+            - name: CLAMAV_NO_MILTERD
+              value: {{ ternary "false" "true" .Values.milter.enabled | quote }}
+            - name: FRESHCLAM_CHECKS
+              value: {{ .Values.freshclam.checks | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: clamd
+              containerPort: {{ .Values.clamd.tcpPort }}
+              protocol: TCP
+          {{- if .Values.milter.enabled }}
+            - name: milter
+              containerPort: {{ .Values.milter.tcpPort }}
+              protocol: TCP
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/clamav
+            - name: run
+              mountPath: /run/clamav
+            - name: config
+              mountPath: /etc/clamav/clamd.conf
+              subPath: clamd.conf
+            - name: {{ include "clamav.freshclamConfigVolume" . }}
+              mountPath: /etc/clamav/freshclam.conf
+              subPath: freshclam.conf
+          {{- if .Values.milter.enabled }}
+            - name: config
+              mountPath: /etc/clamav/clamav-milter.conf
+              subPath: clamav-milter.conf
+          {{- end }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            tcpSocket:
+              port: clamd
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            tcpSocket:
+              port: clamd
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - '/usr/local/bin/clamdcheck.sh'
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "clamav.fullname" .) .Values.persistence.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: run
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "clamav.fullname" . }}
+      {{- if include "clamav.freshclamSecretEnabled" . }}
+        - name: freshclam-config
+          secret:
+            secretName: {{ include "clamav.freshclamConfigSecretName" . }}
+      {{- if .Values.freshclam.existingSecret }}
+        - name: freshclam-config-rendered
+          emptyDir: {}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,178 @@
+replicaCount: 1
+
+image:
+  repository: clamav/clamav
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ''
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ''
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 101
+
+securityContext: {}
+  # allowPrivilegeEscalation: false
+  # capabilities:
+  #   drop:
+  #     - ALL
+
+service:
+  type: ClusterIP
+  # clamd TCP socket
+  port: 3310
+  # clamav-milter, only added when milter.enabled is true
+  milterPort: 7357
+  annotations: {}
+
+# The signature database has to be loaded before clamd accepts connections, which takes
+# minutes on a cold start. The startup probe gives it that time without the liveness
+# probe restarting the pod in the meantime.
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 60
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 60
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 30
+  failureThreshold: 3
+
+# clamd is memory hungry, the loaded signature database alone needs well above 1Gi.
+resources: {}
+  # limits:
+  #   cpu: 2
+  #   memory: 3Gi
+  # requests:
+  #   cpu: 500m
+  #   memory: 2Gi
+
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage:
+  metrics: []
+  behavior: {}
+
+# PodDisruptionBudget, only useful with more than one replica.
+# minAvailable takes precedence over maxUnavailable.
+pdb:
+  enabled: false
+  minAvailable:
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: ''
+
+priorityClassName: ''
+# clamd can be slow to shut down while scans are in flight.
+terminationGracePeriodSeconds: ''
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+topologySpreadConstraints: []
+
+# Extra environment variables for the container.
+env: []
+  # - name: CLAMAV_NO_CLAMD
+  #   value: 'false'
+
+# Extra ConfigMaps/Secrets exposed as environment variables.
+envFrom: []
+  # - secretRef:
+  #     name: clamav-env
+
+# clamav-milter. Disabled by default, the image only starts it when the milter
+# configuration exists and CLAMAV_NO_MILTERD is false.
+milter:
+  enabled: false
+  # Milter bind address, must be reachable from the MTA.
+  tcpAddr: '0.0.0.0'
+  tcpPort: 7357
+  # Where the milter reaches clamd. Defaults to the local clamd in the same pod.
+  clamdSocket: 'tcp:127.0.0.1:3310'
+  logVerbose: false
+  # Additional raw clamav-milter.conf configuration.
+  extraConfig: ''
+
+freshclam:
+  # Run freshclam inside the pod. Turning this off freezes the signature database.
+  enabled: true
+  # Database update checks per day.
+  checks: 12
+  # Mirror to fetch signatures from.
+  databaseMirror: database.clamav.net
+  # Optional private mirror, tried before databaseMirror.
+  privateMirror: ''
+  # Optional HTTP proxy for the database download.
+  httpProxyServer: ''
+  httpProxyPort: ''
+  httpProxyUsername: ''
+  # Proxy password. Rendered into a Secret, not a ConfigMap.
+  httpProxyPassword: ''
+  # Existing Secret containing the proxy password. An init container reads it through
+  # FRESHCLAM_PROXY_PASSWORD and writes the final freshclam.conf to an emptyDir.
+  existingSecret: ''
+  # Key in freshclam.existingSecret containing the proxy password.
+  existingSecretPasswordKey: password
+  # Additional raw freshclam.conf configuration.
+  extraConfig: ''
+
+clamd:
+  # clamd TCP bind address inside the pod.
+  tcpAddr: '0.0.0.0'
+  tcpPort: 3310
+  # Largest file that is scanned, larger files are skipped.
+  maxFileSize: 100M
+  # Largest amount of data scanned per file.
+  maxScanSize: 400M
+  # Maximum size of a single stream accepted through INSTREAM.
+  streamMaxLength: 100M
+  maxThreads: 12
+  # Seconds clamd waits for the next command before closing an idle connection.
+  readTimeout: 300
+  logVerbose: false
+  # Rejects files clamd could not fully scan (encrypted archives, size limits).
+  alertOnEncryptedDoc: false
+  alertOnEncryptedArchive: false
+  # Additional raw clamd.conf configuration.
+  extraConfig: ''
+
+persistence:
+  # Persist /var/lib/clamav so the signature database survives restarts. Without it
+  # every new pod downloads the full database from the mirror before clamd is ready.
+  enabled: false
+  existingClaim: ''
+  accessMode: ReadWriteOnce
+  size: 3Gi
+  storageClass: ''
+  annotations: {}

@@ -1,0 +1,18 @@
+{{- include "clamav.validateFreshclam" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clamav.fullname" . }}
+  labels:
+    {{- include "clamav.labels" . | nindent 4 }}
+data:
+  clamd.conf: |
+    {{- include "clamav.clamdConfig" . | nindent 4 }}
+{{- if not (include "clamav.freshclamSecretEnabled" .) }}
+  freshclam.conf: |
+    {{- include "clamav.freshclamConfig" . | nindent 4 }}
+{{- end }}
+{{- if .Values.milter.enabled }}
+  clamav-milter.conf: |
+    {{- include "clamav.milterConfig" . | nindent 4 }}
+{{- end }}
