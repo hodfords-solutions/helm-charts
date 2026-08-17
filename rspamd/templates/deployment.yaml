@@ -1,0 +1,243 @@
+{{- include "rspamd.validateRedis" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rspamd.fullname" . }}
+  labels:
+    {{- include "rspamd.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.hpa.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "rspamd.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ toYaml .Values.config | sha256sum }}
+        {{- if .Values.redis.enabled }}
+        checksum/redis-config: {{ toYaml .Values.redis | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "rspamd.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rspamd.serviceAccountName" . }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.redis.enabled .Values.redis.existingSecret }}
+      initContainers:
+        - name: render-redis-config
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              cp /redis-template/redis.conf /redis-config/redis.conf
+              if [ -f /redis-template/history_redis.conf ]; then
+                cp /redis-template/history_redis.conf /redis-config/history_redis.conf
+              fi
+
+              append_password() {
+                file="$1"
+                [ -f "$file" ] || return 0
+                awk -v password="$REDIS_PASSWORD" 'BEGIN {
+                  gsub(/\\/, "\\\\", password)
+                  gsub(/"/, "\\\"", password)
+                  printf "password = \"%s\";\n", password
+                }' >> "$file"
+              }
+
+              append_password /redis-config/redis.conf
+              append_password /redis-config/history_redis.conf
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.existingSecret }}
+                  key: {{ .Values.redis.existingSecretPasswordKey }}
+          volumeMounts:
+            - name: redis-config
+              mountPath: /redis-template
+              readOnly: true
+            - name: redis-config-rendered
+              mountPath: /redis-config
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: proxy
+              containerPort: 11332
+              protocol: TCP
+            - name: rspamd
+              containerPort: 11333
+              protocol: TCP
+            - name: controller
+              containerPort: 11334
+              protocol: TCP
+            - name: fuzzy
+              containerPort: 11335
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rspamd
+            - name: run
+              mountPath: /run/rspamd
+          {{- if .Values.redis.enabled }}
+            - name: {{ include "rspamd.redisConfigVolume" . }}
+              mountPath: /etc/rspamd/local.d/redis.conf
+              subPath: redis.conf
+          {{- if .Values.config.historyRedis.enabled }}
+            - name: {{ include "rspamd.redisConfigVolume" . }}
+              mountPath: /etc/rspamd/local.d/history_redis.conf
+              subPath: history_redis.conf
+          {{- end }}
+          {{- end }}
+            - name: config
+              mountPath: /etc/rspamd/local.d/worker-normal.inc
+              subPath: worker-normal.inc
+            - name: config
+              mountPath: /etc/rspamd/local.d/worker-proxy.inc
+              subPath: worker-proxy.inc
+          {{- if .Values.config.workerController.enabled }}
+            - name: {{ ternary "controller-config" "config" (eq (include "rspamd.controllerSecretEnabled" .) "true") }}
+              mountPath: /etc/rspamd/local.d/worker-controller.inc
+              subPath: worker-controller.inc
+          {{- end }}
+          {{- with .Values.config.options }}
+            - name: config
+              mountPath: /etc/rspamd/local.d/options.inc
+              subPath: options.inc
+          {{- end }}
+          {{- with .Values.config.rbl }}
+            - name: config
+              mountPath: /etc/rspamd/local.d/rbl.conf
+              subPath: rbl.conf
+          {{- end }}
+          {{- with .Values.config.settings }}
+            - name: config
+              mountPath: /etc/rspamd/local.d/settings.conf
+              subPath: settings.conf
+          {{- end }}
+          {{- with .Values.config.arc }}
+            - name: config
+              mountPath: /etc/rspamd/local.d/arc.conf
+              subPath: arc.conf
+          {{- end }}
+            - name: config
+              mountPath: /etc/rspamd/local.d/dkim_signing.conf
+              subPath: dkim_signing.conf
+            - name: config
+              mountPath: /etc/rspamd/local.d/milter_headers.conf
+              subPath: milter_headers.conf
+            - name: config
+              mountPath: /etc/rspamd/local.d/classifier-bayes.conf
+              subPath: classifier-bayes.conf
+            - name: config
+              mountPath: /etc/rspamd/override.d/classifier-bayes.conf
+              subPath: override-classifier-bayes.conf
+            - name: config
+              mountPath: /etc/rspamd/local.d/multimap.conf
+              subPath: multimap.conf
+            - name: config
+              mountPath: /etc/rspamd/local.d/whitelist_ip.map
+              subPath: whitelist_ip.map
+            - name: config
+              mountPath: /etc/rspamd/local.d/whitelist_from.map
+              subPath: whitelist_from.map
+            - name: config
+              mountPath: /etc/rspamd/local.d/blacklist_ip.map
+              subPath: blacklist_ip.map
+            - name: config
+              mountPath: /etc/rspamd/local.d/blacklist_from.map
+              subPath: blacklist_from.map
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: controller
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: controller
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ default (include "rspamd.fullname" .) .Values.persistence.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: run
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "rspamd.fullname" . }}
+      {{- if include "rspamd.controllerSecretEnabled" . }}
+        - name: controller-config
+          secret:
+            secretName: {{ include "rspamd.controllerConfigSecretName" . }}
+      {{- end }}
+      {{- if .Values.redis.enabled }}
+        - name: redis-config
+          secret:
+            secretName: {{ include "rspamd.redisConfigSecretName" . }}
+      {{- if .Values.redis.existingSecret }}
+        - name: redis-config-rendered
+          emptyDir: {}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

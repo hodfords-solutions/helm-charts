@@ -1,0 +1,16 @@
+apiVersion: v2
+name: rspamd
+description: A Helm chart for Rspamd
+type: application
+keywords:
+  - rspamd
+  - spam
+  - milter
+  - proxy
+  - controller
+home: https://rspamd.com
+sources:
+  - https://hub.docker.com/r/rspamd/rspamd
+  - https://github.com/rspamd/rspamd
+version: 0.0.1
+appVersion: '4.1.5'
