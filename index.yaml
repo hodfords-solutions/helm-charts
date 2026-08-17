@@ -148,6 +148,27 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.1.2/application-0.1.2.tgz
     version: 0.1.2
+  clamav:
+  - apiVersion: v2
+    appVersion: 1.4.3
+    created: "2026-08-17T04:10:30.285502911Z"
+    description: A Helm chart for ClamAV
+    digest: eeefb9b55cf8ac89c859f0a9f24f111d9f4eb935d9d4f8fd09c53353fc0a3e5f
+    home: https://www.clamav.net
+    keywords:
+    - clamav
+    - clamd
+    - freshclam
+    - antivirus
+    - milter
+    name: clamav
+    sources:
+    - https://hub.docker.com/r/clamav/clamav
+    - https://github.com/Cisco-Talos/clamav-docker
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/clamav-0.0.1/clamav-0.0.1.tgz
+    version: 0.0.1
   mongodb:
   - apiVersion: v2
     created: "2026-07-29T14:24:56.103571024Z"
@@ -281,4 +302,4 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/rspamd-0.0.1/rspamd-0.0.1.tgz
     version: 0.0.1
-generated: "2026-08-17T03:47:11.47607449Z"
+generated: "2026-08-17T04:10:30.285581008Z"
