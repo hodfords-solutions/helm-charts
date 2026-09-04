@@ -61,6 +61,7 @@ and `config.workerController.bindSocket` must listen on the pod IP (default `*:1
 | `pdb.minAvailable` | int/string | `nil` | Minimum available pods, takes precedence over `maxUnavailable` |
 | `pdb.maxUnavailable` | int/string | `1` | Maximum unavailable pods, ignored when `minAvailable` is set |
 | `pdb.unhealthyPodEvictionPolicy` | string | `""` | `IfHealthyBudget` or `AlwaysAllow` (Kubernetes >= 1.27) |
+| `hostname` | string | `""` | Pod hostname, used by Rspamd in history keys, the web UI and reports. Shared by all replicas, so use it with `replicaCount: 1` |
 | `priorityClassName` | string | `""` | Priority class of the pods |
 | `terminationGracePeriodSeconds` | string | `""` | Termination grace period |
 | `nodeSelector` | object | `{}` | Node selector of the pods |
