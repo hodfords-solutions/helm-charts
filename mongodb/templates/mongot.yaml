@@ -1,0 +1,71 @@
+{{- if .Values.mongot.enabled }}
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBSearch
+metadata:
+  name: {{ .Values.name }}
+  {{- with .Values.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.mongot.version }}
+  version: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.mongot.logLevel }}
+  logLevel: {{ . }}
+  {{- end }}
+  source:
+    mongodbResourceRef:
+      name: {{ .Values.name }}
+    username: {{ .Values.mongot.syncSource.username }}
+    passwordSecretRef:
+      name: {{ include "mongot.syncSourceSecretName" . }}
+      key: password
+  {{- with .Values.mongot.tls.certificateKeySecretName }}
+  security:
+    tls:
+      certificateKeySecretRef:
+        name: {{ . }}
+  {{- end }}
+  {{- with .Values.mongot.observability }}
+  observability:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  clusters:
+    - replicas: {{ .Values.mongot.replicas }}
+      persistence:
+        single:
+          storage: {{ .Values.mongot.persistent.size }}
+          {{- with .Values.mongot.persistent.storageClass }}
+          storageClass: {{ . }}
+          {{- end }}
+      {{- with .Values.mongot.resources }}
+      resourceRequirements:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongot.jvmFlags }}
+      jvmFlags:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongot.advancedConfigs }}
+      advancedMongotConfigs:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongot.nodeAffinity }}
+      nodeAffinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongot.loadBalancer }}
+      loadBalancer:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongot.statefulSet }}
+      statefulSet:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

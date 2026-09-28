@@ -31,6 +31,23 @@ This Helm chart deploys a MongoDB database on a Kubernetes cluster using MCK (Mo
 | `mongod.securityContext` | object | `{}` | Security context of the `mongod` container |
 | `mongodbAgent.resources` | object | `{}` | Resource requests/limits of the `mongodb-agent` container |
 | `mongodbAgent.securityContext` | object | `{}` | Security context of the `mongodb-agent` container |
+| `mongot.enabled` | bool | `false` | Deploy MongoDB Search (mongot) as a `MongoDBSearch` resource (MCK >= 1.10, MongoDB >= 8.2.0) |
+| `mongot.version` | string | `""` | mongot version, empty lets the operator pick |
+| `mongot.logLevel` | string | `""` | `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR` |
+| `mongot.replicas` | int | `1` | Number of mongot pods, more than 1 requires `mongot.loadBalancer` |
+| `mongot.resources` | object | `{}` | Resource requests/limits of the mongot pods |
+| `mongot.persistent.storageClass` | string | `""` | Storage class of the mongot volume |
+| `mongot.persistent.size` | string | `10Gi` | Size of the mongot volume |
+| `mongot.jvmFlags` | list | `[]` | mongot `--jvm-flags` |
+| `mongot.advancedConfigs` | object | `{}` | Extra mongot config, rendered under `advancedConfigs` |
+| `mongot.nodeAffinity` | object | `{}` | Node affinity of the mongot pods |
+| `mongot.loadBalancer` | object | `{}` | `managed` (Envoy) or `unmanaged` load balancer in front of mongot |
+| `mongot.statefulSet` | object | `{}` | Overrides merged into the mongot StatefulSet |
+| `mongot.syncSource.username` | string | `search-sync-source` | User mongot syncs data with, created with the `searchCoordinator` role |
+| `mongot.syncSource.password` | string | `""` | Password of the sync user (stored in `<name>-search-sync-source-password`) |
+| `mongot.syncSource.existingSecret` | string | `""` | Existing secret with a `password` key, used instead of `password` |
+| `mongot.tls.certificateKeySecretName` | string | `""` | TLS secret of the mongot server, empty disables TLS |
+| `mongot.observability` | object | `{}` | `spec.observability` of the `MongoDBSearch` resource |
 | `serviceName` | string | `""` | Override the StatefulSet headless service name |
 | `pdb.enabled` | bool | `false` | Create a PodDisruptionBudget for the replica set pods |
 | `pdb.minAvailable` | int/string | `2` | Minimum available pods, takes precedence over `maxUnavailable` |
@@ -68,4 +85,20 @@ tolerations:
     operator: 'Equal'
     value: 'true'
     effect: 'NoSchedule'
+```
+
+### MongoDB Search (mongot)
+
+```yaml
+mongot:
+  enabled: true
+  resources:
+    limits:
+      cpu: '2'
+      memory: 4Gi
+    requests:
+      cpu: '1'
+      memory: 2Gi
+  syncSource:
+    password: 'change-me'
 ```
