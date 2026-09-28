@@ -82,6 +82,9 @@ mongot:
   loadBalancer: {}
     # managed:
     #   replicas: 1
+  # Service account of the mongot pods, defaults to <name>-sa (the operator's default,
+  # mongodb-kubernetes-database-pods, only exists in explicitly watched namespaces)
+  serviceAccountName: ''
   # Overrides merged into the mongot StatefulSet
   statefulSet: {}
   # User mongot authenticates as to sync data from the replica set

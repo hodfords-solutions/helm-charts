@@ -42,6 +42,7 @@ This Helm chart deploys a MongoDB database on a Kubernetes cluster using MCK (Mo
 | `mongot.advancedConfigs` | object | `{}` | Extra mongot config, rendered under `advancedConfigs` |
 | `mongot.nodeAffinity` | object | `{}` | Node affinity of the mongot pods |
 | `mongot.loadBalancer` | object | `{}` | `managed` (Envoy) or `unmanaged` load balancer in front of mongot |
+| `mongot.serviceAccountName` | string | `""` | Service account of the mongot pods, defaults to `<name>-sa` |
 | `mongot.statefulSet` | object | `{}` | Overrides merged into the mongot StatefulSet |
 | `mongot.syncSource.username` | string | `search-sync-source` | User mongot syncs data with, created with the `searchCoordinator` role |
 | `mongot.syncSource.password` | string | `""` | Password of the sync user (stored in `<name>-search-sync-source-password`) |
