@@ -50,6 +50,53 @@ mongodbAgent:
     #   memory: 128Mi
   securityContext: {}
 
+# MongoDB Search (mongot), deployed as a MongoDBSearch resource next to the replica set.
+# Requires MCK >= 1.10 and MongoDB >= 8.2.0.
+mongot:
+  enabled: false
+  # mongot version, empty lets the operator pick
+  version: ''
+  # TRACE | DEBUG | INFO | WARN | ERROR (operator default: INFO)
+  logLevel: ''
+  # More than 1 replica requires loadBalancer to be set
+  replicas: 1
+  resources: {}
+    # limits:
+    #   cpu: '2'
+    #   memory: 4Gi
+    # requests:
+    #   cpu: '1'
+    #   memory: 2Gi
+  persistent:
+    storageClass: ''
+    size: '10Gi'
+  # Passed to mongot as --jvm-flags, e.g. ['-Xms2g', '-Xmx2g']
+  jvmFlags: []
+  # Rendered verbatim under advancedConfigs of the mongot config file
+  advancedConfigs: {}
+    # indexing:
+    #   lucene:
+    #     fieldLimit: 1500
+  nodeAffinity: {}
+  # managed (Envoy) or unmanaged load balancer, see spec.clusters[].loadBalancer
+  loadBalancer: {}
+    # managed:
+    #   replicas: 1
+  # Overrides merged into the mongot StatefulSet
+  statefulSet: {}
+  # User mongot authenticates as to sync data from the replica set
+  syncSource:
+    username: 'search-sync-source'
+    # Stored in <name>-search-sync-source-password, required unless existingSecret is set
+    password: ''
+    # Existing secret with a `password` key
+    existingSecret: ''
+  tls:
+    # Secret with tls.crt/tls.key for the mongot server, empty disables TLS
+    certificateKeySecretName: ''
+  # spec.observability, e.g. prometheus.mode: disabled
+  observability: {}
+
 # Override the headless service name (defaults to the resource name via the operator)
 serviceName: ''
 

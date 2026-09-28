@@ -31,6 +31,17 @@ spec:
         - name: readWriteAnyDatabase
           db: admin
       scramCredentialsSecretName: {{ .Values.auth.scramCredentialsSecretName }}
+    {{- if .Values.mongot.enabled }}
+    # User mongot authenticates as to sync data. searchCoordinator is built in from MongoDB 8.2.
+    - name: {{ .Values.mongot.syncSource.username }}
+      db: admin
+      passwordSecretRef:
+        name: {{ include "mongot.syncSourceSecretName" . }}
+      roles:
+        - name: searchCoordinator
+          db: admin
+      scramCredentialsSecretName: {{ .Values.name }}-search-sync-source
+    {{- end }}
   additionalMongodConfig:
     {{- toYaml .Values.additionalMongodConfig | nindent 4 }}
   statefulSet:
