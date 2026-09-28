@@ -1,4 +1,7 @@
 {{- if .Values.mongot.enabled }}
+{{- if eq .Values.mongot.syncSource.username .Values.auth.username }}
+{{- fail "mongot.syncSource.username must differ from auth.username, the operator rejects duplicate users" }}
+{{- end }}
 ---
 apiVersion: mongodb.com/v1
 kind: MongoDBSearch
@@ -36,14 +39,31 @@ spec:
   observability:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- /* The operator hardcodes the mongodb-kubernetes-database-pods service account, which only exists in the operator's explicitly watched namespaces */}}
+  {{- $sa := dict "spec" (dict "template" (dict "spec" (dict "serviceAccountName" (.Values.mongot.serviceAccountName | default (printf "%s-sa" .Values.name))))) }}
+  {{- $statefulSet := mustMergeOverwrite $sa (deepCopy .Values.mongot.statefulSet) }}
+  {{- $persistence := dict "single" (dict "storage" .Values.mongot.persistent.size) }}
+  {{- with .Values.mongot.persistent.storageClass }}
+  {{- $_ := set $persistence.single "storageClass" . }}
+  {{- end }}
+  {{- if .Values.mongot.legacySpec }}
+  {{- /* MCK < 1.10 has no spec.clusters, the apiserver silently prunes it */}}
+  {{- if gt (int .Values.mongot.replicas) 1 }}
+  {{- fail "mongot.replicas > 1 is not supported with mongot.legacySpec (MCK < 1.10)" }}
+  {{- end }}
+  persistence:
+    {{- toYaml $persistence | nindent 4 }}
+  {{- with .Values.mongot.resources }}
+  resourceRequirements:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  statefulSet:
+    {{- toYaml $statefulSet | nindent 4 }}
+  {{- else }}
   clusters:
     - replicas: {{ .Values.mongot.replicas }}
       persistence:
-        single:
-          storage: {{ .Values.mongot.persistent.size }}
-          {{- with .Values.mongot.persistent.storageClass }}
-          storageClass: {{ . }}
-          {{- end }}
+        {{- toYaml $persistence | nindent 8 }}
       {{- with .Values.mongot.resources }}
       resourceRequirements:
         {{- toYaml . | nindent 8 }}
@@ -64,8 +84,7 @@ spec:
       loadBalancer:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- /* The operator hardcodes the mongodb-kubernetes-database-pods service account, which only exists in the operator's explicitly watched namespaces */}}
-      {{- $sa := dict "spec" (dict "template" (dict "spec" (dict "serviceAccountName" (.Values.mongot.serviceAccountName | default (printf "%s-sa" .Values.name))))) }}
       statefulSet:
-        {{- toYaml (mustMergeOverwrite $sa (deepCopy .Values.mongot.statefulSet)) | nindent 8 }}
+        {{- toYaml $statefulSet | nindent 8 }}
+  {{- end }}
 {{- end }}

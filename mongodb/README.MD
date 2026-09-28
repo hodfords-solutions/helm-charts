@@ -31,7 +31,8 @@ This Helm chart deploys a MongoDB database on a Kubernetes cluster using MCK (Mo
 | `mongod.securityContext` | object | `{}` | Security context of the `mongod` container |
 | `mongodbAgent.resources` | object | `{}` | Resource requests/limits of the `mongodb-agent` container |
 | `mongodbAgent.securityContext` | object | `{}` | Security context of the `mongodb-agent` container |
-| `mongot.enabled` | bool | `false` | Deploy MongoDB Search (mongot) as a `MongoDBSearch` resource (MCK >= 1.10, MongoDB >= 8.2.0) |
+| `mongot.enabled` | bool | `false` | Deploy MongoDB Search (mongot) as a `MongoDBSearch` resource (MongoDB >= 8.2.0, MCK >= 1.10 or `mongot.legacySpec`) |
+| `mongot.legacySpec` | bool | `false` | Render the pre-1.10 schema (no `spec.clusters`), required on MCK < 1.10 |
 | `mongot.version` | string | `""` | mongot version, empty lets the operator pick |
 | `mongot.logLevel` | string | `""` | `TRACE`, `DEBUG`, `INFO`, `WARN` or `ERROR` |
 | `mongot.replicas` | int | `1` | Number of mongot pods, more than 1 requires `mongot.loadBalancer` |
@@ -44,7 +45,7 @@ This Helm chart deploys a MongoDB database on a Kubernetes cluster using MCK (Mo
 | `mongot.loadBalancer` | object | `{}` | `managed` (Envoy) or `unmanaged` load balancer in front of mongot |
 | `mongot.serviceAccountName` | string | `""` | Service account of the mongot pods, defaults to `<name>-sa` |
 | `mongot.statefulSet` | object | `{}` | Overrides merged into the mongot StatefulSet |
-| `mongot.syncSource.username` | string | `search-sync-source` | User mongot syncs data with, created with the `searchCoordinator` role |
+| `mongot.syncSource.username` | string | `search-sync-source` | User mongot syncs data with, created with the `searchCoordinator` role. Must differ from `auth.username` |
 | `mongot.syncSource.password` | string | `""` | Password of the sync user (stored in `<name>-search-sync-source-password`) |
 | `mongot.syncSource.existingSecret` | string | `""` | Existing secret with a `password` key, used instead of `password` |
 | `mongot.tls.certificateKeySecretName` | string | `""` | TLS secret of the mongot server, empty disables TLS |

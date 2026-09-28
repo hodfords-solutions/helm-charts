@@ -51,9 +51,13 @@ mongodbAgent:
   securityContext: {}
 
 # MongoDB Search (mongot), deployed as a MongoDBSearch resource next to the replica set.
-# Requires MCK >= 1.10 and MongoDB >= 8.2.0.
+# Requires MongoDB >= 8.2.0 and MCK >= 1.10 (or mongot.legacySpec on older MCK).
 mongot:
   enabled: false
+  # Render the pre-1.10 MongoDBSearch schema (top-level persistence/resourceRequirements/statefulSet
+  # instead of spec.clusters). Required on MCK < 1.10, where jvmFlags, advancedConfigs, nodeAffinity,
+  # loadBalancer and observability are not supported and replicas must be 1.
+  legacySpec: false
   # mongot version, empty lets the operator pick
   version: ''
   # TRACE | DEBUG | INFO | WARN | ERROR (operator default: INFO)
@@ -87,7 +91,7 @@ mongot:
   serviceAccountName: ''
   # Overrides merged into the mongot StatefulSet
   statefulSet: {}
-  # User mongot authenticates as to sync data from the replica set
+  # User mongot authenticates as to sync data from the replica set, must differ from auth.username
   syncSource:
     username: 'search-sync-source'
     # Stored in <name>-search-sync-source-password, required unless existingSecret is set
