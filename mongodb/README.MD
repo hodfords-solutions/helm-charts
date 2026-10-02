@@ -41,6 +41,8 @@ This Helm chart deploys a MongoDB database on a Kubernetes cluster using MCK (Mo
 | `mongot.jvmFlags` | list | `[]` | mongot `--jvm-flags` |
 | `mongot.advancedConfigs` | object | `{}` | Extra mongot config, rendered under `advancedConfigs` |
 | `mongot.nodeAffinity` | object | `{}` | Node affinity of the mongot pods |
+| `mongot.nodeSelector` | object | `{}` | Node selector of the mongot pods, defaults to `nodeSelector` |
+| `mongot.tolerations` | list | `[]` | Tolerations of the mongot pods, defaults to `tolerations` |
 | `mongot.loadBalancer` | object | `{}` | `managed` (Envoy) or `unmanaged` load balancer in front of mongot |
 | `mongot.serviceAccountName` | string | `""` | Service account of the mongot pods, defaults to `<name>-sa` |
 | `mongot.statefulSet` | object | `{}` | Overrides merged into the mongot StatefulSet |
