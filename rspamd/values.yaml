@@ -80,6 +80,11 @@ pdb:
   maxUnavailable: 1
   unhealthyPodEvictionPolicy: ''
 
+# Pod hostname. Rspamd embeds the hostname in history keys, the web UI and
+# reports, so setting it gives stable values instead of the generated pod name.
+# Applies to every replica, so keep replicaCount at 1 when using it.
+hostname: ''
+
 priorityClassName: ''
 terminationGracePeriodSeconds: ''
 
