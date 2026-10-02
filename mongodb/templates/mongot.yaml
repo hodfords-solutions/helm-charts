@@ -65,7 +65,14 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- /* The operator hardcodes the mongodb-kubernetes-database-pods service account, which only exists in the operator's explicitly watched namespaces */}}
-      {{- $sa := dict "spec" (dict "template" (dict "spec" (dict "serviceAccountName" (.Values.mongot.serviceAccountName | default (printf "%s-sa" .Values.name))))) }}
+      {{- $podSpec := dict "serviceAccountName" (.Values.mongot.serviceAccountName | default (printf "%s-sa" .Values.name)) }}
+      {{- with .Values.mongot.nodeSelector | default .Values.nodeSelector }}
+      {{- $_ := set $podSpec "nodeSelector" . }}
+      {{- end }}
+      {{- with .Values.mongot.tolerations | default .Values.tolerations }}
+      {{- $_ := set $podSpec "tolerations" . }}
+      {{- end }}
+      {{- $base := dict "spec" (dict "template" (dict "spec" $podSpec)) }}
       statefulSet:
-        {{- toYaml (mustMergeOverwrite $sa (deepCopy .Values.mongot.statefulSet)) | nindent 8 }}
+        {{- toYaml (mustMergeOverwrite $base (deepCopy .Values.mongot.statefulSet)) | nindent 8 }}
 {{- end }}

@@ -78,6 +78,9 @@ mongot:
     #   lucene:
     #     fieldLimit: 1500
   nodeAffinity: {}
+  # Node selector/tolerations of the mongot pods, empty falls back to the top-level ones
+  nodeSelector: {}
+  tolerations: []
   # managed (Envoy) or unmanaged load balancer, see spec.clusters[].loadBalancer
   loadBalancer: {}
     # managed:
