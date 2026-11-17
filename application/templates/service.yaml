@@ -13,6 +13,12 @@ metadata:
   {{- end }}
 spec:
   type: {{ $svc.type }}
+  {{- with $svc.externalTrafficPolicy }}
+  {{- if not (has $svc.type (list "NodePort" "LoadBalancer")) }}
+  {{- fail (printf "service %s: externalTrafficPolicy requires type NodePort or LoadBalancer, got %s" $svc.name $svc.type) }}
+  {{- end }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
   ports:
     {{- range $port := $svc.ports }}
     - port: {{ $port.port }}

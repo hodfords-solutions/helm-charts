@@ -15,10 +15,13 @@ dockerConfig:
 
 ## @param service.type Main Service type, default is ClusterIP
 ## @param service.port Main Service port, can check by APP_PORT env variable
+## @param service.externalTrafficPolicy Cluster or Local, only for NodePort/LoadBalancer services.
+## Local keeps the client source IP and skips the extra node hop, but only nodes running a pod receive traffic
 ##
 service:
   type: ClusterIP
   port: 3000
+  externalTrafficPolicy: ""
 
 ## @param grpcService.enabled Enable grpc service
 ## @param grpcService.port GRPC service port, can check by GRPC_PORT env variable
@@ -31,6 +34,7 @@ grpcService:
 ## @param services[].name Name suffix, appended to the release full name
 ## @param services[].type Service type, default is ClusterIP
 ## @param services[].annotations Service annotations
+## @param services[].externalTrafficPolicy Cluster or Local, only for NodePort/LoadBalancer services
 ## @param services[].ports[].name Port name, must be unique across all services
 ## @param services[].ports[].port Service port
 ## @param services[].ports[].targetPort Container port, defaults to the service port
@@ -49,6 +53,7 @@ services: []
 #        port: 6060
 #  - name: public
 #    type: LoadBalancer
+#    externalTrafficPolicy: Local
 #    annotations: {}
 #    ports:
 #      - name: https
