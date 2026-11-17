@@ -104,12 +104,14 @@ are suffixed with their own name.
     "name" $fullName
     "type" .Values.service.type
     "annotations" (default dict .Values.service.annotations)
+    "externalTrafficPolicy" .Values.service.externalTrafficPolicy
     "ports" $ports) -}}
 {{- range $svc := .Values.services -}}
 {{- $services = append $services (dict
     "name" (printf "%s-%s" $fullName $svc.name | trunc 63 | trimSuffix "-")
     "type" (default "ClusterIP" $svc.type)
     "annotations" (default dict $svc.annotations)
+    "externalTrafficPolicy" $svc.externalTrafficPolicy
     "ports" (default list $svc.ports)) -}}
 {{- end -}}
 {{- toYaml (dict "items" $services) -}}
