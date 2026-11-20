@@ -35,7 +35,50 @@
 | `ingress.annotations`      | Additional annotations for the ingress                                                                                                                                                               | `` |
 | `ingress.tls`              | TLS configuration for ingress                                                                                                                                                                        | `` |
 | `ingress.host`             | Ingress host name                                                                                                                                                                                    | `app.example.com`                           |
+| `certificate.enabled`     | Create a cert-manager `Certificate` for the gateway hostnames (secret `<fullname>-tls` unless `certificate.secretName`)                                                                                 | `false`                                     |
+| `certificate.issuer.kind / .name` | Issuer of the certificate, e.g. `ClusterIssuer` / `letsencrypt-prod-cluster`                                                                                                                            | `ClusterIssuer` / `""`                      |
+| `certificate.domain / .additionalHosts` | commonName (defaults to the first hostname) and extra SANs                                                                                                                                              | `""` / `[]`                                 |
+| `listenerset.enabled`     | Create a Gateway API `ListenerSet` bringing one HTTPS listener per hostname onto a shared Gateway (Istio ingress gateway), same as the argo-cd chart's `server.listenerset`                             | `false`                                     |
+| `listenerset.parentRef`   | The shared Gateway, e.g. `{name: tool-gateway, namespace: istio-ingress}`. Its `allowedListeners` must allow the release namespace                                                                      | `{}`                                        |
+| `listenerset.listeners`   | Listeners used verbatim instead of the synthesized ones                                                                                                                                                 | `[]`                                        |
+| `httproute.enabled`       | Create an `HTTPRoute` to the application service, attached to this release's ListenerSet unless `httproute.parentRefs` is set                                                                           | `false`                                     |
+| `httproute.hostnames`     | Hostnames of the route, listener and certificate. Defaults to `ingress.host` + `ingress.hosts`                                                                                                          | `[]`                                        |
+| `httproute.serviceName / .servicePort` | Backend of the route, defaults to `ingress.serviceName` / `ingress.servicePort`                                                                                                                         | `nil`                                       |
+| `httproute.rules`         | Rules (`matches`/`filters`/`timeouts`), each routing to the backend                                                                                                                                     | `PathPrefix /`                              |
+| `httproute.httpsRedirect.enabled / .parentRefs` | Also create an HTTP -> HTTPS redirect route on the Gateway's plain HTTP listener (`parentRefs` required)                                                                                                | `false` / `[]`                              |
 | `imagePullSecrets`         | Extra image pull secrets (optional)                                                                                                                                                                  | `[]`                                        |
 | `env`                      | Environment variables for the deployment                                                                                                                                                             | `[]`                                        |
 | `externalSecrets`                      | External Secret Variables <br> <code>- clusterStoreName: cluster-name<br>&nbsp;&nbsp;refSecretName: secret-name<br> &nbsp;&nbsp;secrets:<br> &nbsp;&nbsp;&nbsp;&nbsp;DB_PASSWORD: db-password</code> | `[]`                                        |
 
+
+## Migrating from ingress-nginx to the Istio gateway (Gateway API)
+
+Hostnames and backend are taken from the existing `ingress` values, so a release migrates by turning
+`ingress` off and the gateway resources on:
+
+```yaml
+ingress:
+  enabled: false          # host/hosts/serviceName/servicePort are still read by httproute
+  host: api.example.com
+certificate:
+  enabled: true
+  issuer:
+    name: letsencrypt-prod-cluster
+listenerset:
+  enabled: true
+  parentRef:
+    name: tool-gateway
+    namespace: istio-ingress
+httproute:
+  enabled: true
+  httpsRedirect:
+    enabled: true
+    parentRefs:
+      - name: tool-gateway
+        namespace: istio-ingress
+        sectionName: http
+```
+
+The shared Gateway must list the release namespace in `spec.allowedListeners` and in its `http` listener's
+`allowedRoutes` (redirect and cert-manager HTTP-01 routes). nginx annotations (IP allow-lists, body size,
+timeouts...) do not carry over: use an Istio `AuthorizationPolicy` on the gateway and `httproute.rules[].timeouts`.

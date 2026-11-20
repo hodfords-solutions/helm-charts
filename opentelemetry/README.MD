@@ -45,7 +45,15 @@ OpenTelemetry Operator.
 | `collector.affinity` | object | `{}` | Affinity/anti-affinity rules |
 | `collector.topologySpreadConstraints` | list | `[]` | Topology spread constraints |
 | `collector.autoscaler` | object | `{}` | Horizontal autoscaling settings |
-| `collector.ingress` | object | `{}` | Ingress settings of the collector |
+| `collector.ingress` | object | `{}` | Ingress settings passed to the operator (Ingress/OpenShift Route only) |
+| `collector.certificate.enabled` | bool | `false` | Create a cert-manager `Certificate` for the gateway hostnames (secret `<name>-tls` unless `secretName`) |
+| `collector.certificate.issuer` | object | `{kind: ClusterIssuer, name: ""}` | Issuer of the certificate |
+| `collector.listenerset.enabled` | bool | `false` | Create a Gateway API `ListenerSet` with one HTTPS listener per hostname on a shared Gateway (Istio ingress gateway) |
+| `collector.listenerset.parentRef` | object | `{}` | The shared Gateway, e.g. `{name: tool-gateway, namespace: istio-ingress}` |
+| `collector.httproute.enabled` | bool | `false` | Create an `HTTPRoute` to the collector OTLP/HTTP port, attached to the ListenerSet unless `parentRefs` is set |
+| `collector.httproute.hostnames` | list | `[]` | Hostnames of the route/listener/certificate, defaults to `collector.ingress.hostname` |
+| `collector.httproute.servicePort` | int | `4318` | Port of the `<name>-collector` Service |
+| `collector.httproute.httpsRedirect` | object | `{enabled: false}` | HTTP -> HTTPS redirect route on the Gateway's plain HTTP listener (`parentRefs` required) |
 | `collector.targetAllocator` | object | `{}` | Target allocator settings |
 | `collector.observability` | object | `{}` | Observability (self-monitoring) settings |
 | `collector.config` | object | otlp receiver + debug exporter | Collector configuration, rendered into `spec.config` |

@@ -1,0 +1,47 @@
+{{- if and .Values.collector.enabled .Values.collector.listenerset.enabled -}}
+{{- $values := .Values.collector.listenerset -}}
+{{- if not $values.parentRef.name -}}
+{{- fail "collector.listenerset.enabled requires collector.listenerset.parentRef.name (the shared Gateway)" -}}
+{{- end -}}
+{{- $hosts := (include "collector.gatewayHostnames" . | fromYaml).items -}}
+{{- if and (not $values.listeners) (not $hosts) -}}
+{{- fail "collector.listenerset.enabled requires collector.listenerset.listeners, collector.httproute.hostnames or collector.ingress.hostname" -}}
+{{- end -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: {{ include "name" . }}
+  namespace: {{ include "collector.namespace" . }}
+  {{- with $values.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRef:
+    {{- toYaml $values.parentRef | nindent 4 }}
+  listeners:
+    {{- if $values.listeners }}
+    {{- tpl (toYaml $values.listeners) . | nindent 4 }}
+    {{- else }}
+    {{- range $i, $host := $hosts }}
+    - name: {{ $i | eq 0 | ternary $values.listenerName (printf "%s-%d" $values.listenerName $i) }}
+      hostname: {{ $host | quote }}
+      port: {{ $values.port }}
+      protocol: {{ $values.protocol }}
+      {{- if $values.tls.enabled }}
+      tls:
+        mode: {{ $values.tls.mode }}
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: {{ $values.tls.secretName | default (include "collector.certificateSecretName" $) }}
+      {{- end }}
+      allowedRoutes:
+        {{- toYaml $values.allowedRoutes | nindent 8 }}
+    {{- end }}
+    {{- end }}
+{{- end }}

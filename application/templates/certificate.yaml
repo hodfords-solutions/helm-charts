@@ -1,0 +1,49 @@
+{{- if .Values.certificate.enabled -}}
+{{- $hosts := (include "backend.gatewayHostnames" . | fromYaml).items -}}
+{{- $domain := .Values.certificate.domain | default (first $hosts) -}}
+{{- if not $domain -}}
+{{- fail "certificate.enabled requires certificate.domain, httproute.hostnames or ingress.host/hosts" -}}
+{{- end -}}
+{{- $dnsNames := uniq (concat (list $domain) $hosts .Values.certificate.additionalHosts) -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+  {{- with .Values.certificate.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  secretName: {{ include "backend.certificateSecretName" . }}
+  {{- with .Values.certificate.secretTemplate }}
+  secretTemplate:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  commonName: {{ $domain | quote }}
+  dnsNames:
+    {{- range $dnsNames }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- with .Values.certificate.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.certificate.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
+  issuerRef:
+    {{- with .Values.certificate.issuer.group }}
+    group: {{ . | quote }}
+    {{- end }}
+    kind: {{ .Values.certificate.issuer.kind | quote }}
+    name: {{ required "certificate.issuer.name is required" .Values.certificate.issuer.name | quote }}
+  {{- with .Values.certificate.privateKey }}
+  privateKey:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.certificate.usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

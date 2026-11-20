@@ -238,14 +238,17 @@ Volume mounts matching "backend.volumes".
 {{- end }}
 
 {{/*
-Service and port the ingress routes to: the first port of the first service by
-default, overridable with ingress.serviceName / ingress.servicePort. Rendered as a
-yaml dict with name/port keys.
+Service and port a route sends traffic to: the first port of the first service by
+default. Called with a dict:
+  context     root context
+  serviceName service name suffix or full service name, optional
+  servicePort port name or number, optional
+Rendered as a yaml dict with name/port keys.
 */}}
-{{- define "backend.ingressBackend" -}}
-{{- $services := (include "backend.services" . | fromYaml).items -}}
+{{- define "backend.routeBackend" -}}
+{{- $services := (include "backend.services" .context | fromYaml).items -}}
 {{- $service := first $services -}}
-{{- with .Values.ingress.serviceName -}}
+{{- with .serviceName -}}
 {{- $name := . -}}
 {{- range $svc := $services -}}
 {{- if or (eq $svc.name $name) (hasSuffix (printf "-%s" $name) $svc.name) -}}
@@ -254,7 +257,7 @@ yaml dict with name/port keys.
 {{- end -}}
 {{- end -}}
 {{- $port := (first $service.ports).port -}}
-{{- with .Values.ingress.servicePort -}}
+{{- with .servicePort -}}
 {{- if kindIs "string" . -}}
 {{- $portName := . -}}
 {{- range $p := $service.ports -}}
@@ -267,4 +270,60 @@ yaml dict with name/port keys.
 {{- end -}}
 {{- end -}}
 {{- toYaml (dict "name" $service.name "port" $port) -}}
+{{- end }}
+
+{{/*
+Backend of the ingress, overridable with ingress.serviceName / ingress.servicePort.
+*/}}
+{{- define "backend.ingressBackend" -}}
+{{- include "backend.routeBackend" (dict "context" . "serviceName" .Values.ingress.serviceName "servicePort" .Values.ingress.servicePort) -}}
+{{- end }}
+
+{{/*
+Backend of the HTTPRoute: httproute.serviceName / httproute.servicePort, falling back
+to the ingress ones so that a migrated release keeps routing to the same port.
+*/}}
+{{- define "backend.httprouteBackend" -}}
+{{- $serviceName := .Values.httproute.serviceName | default .Values.ingress.serviceName -}}
+{{- $servicePort := .Values.httproute.servicePort | default .Values.ingress.servicePort -}}
+{{- include "backend.routeBackend" (dict "context" . "serviceName" $serviceName "servicePort" $servicePort) -}}
+{{- end }}
+
+{{/*
+Hostnames served through the Gateway: httproute.hostnames, or ingress.host +
+ingress.hosts when empty so that a release migrates by flipping the enabled flags.
+Rendered as a yaml dict with an "items" key.
+*/}}
+{{- define "backend.gatewayHostnames" -}}
+{{- $hosts := list -}}
+{{- if .Values.httproute.hostnames -}}
+{{- $hosts = .Values.httproute.hostnames -}}
+{{- else -}}
+{{- with .Values.ingress.host -}}
+{{- $hosts = append $hosts . -}}
+{{- end -}}
+{{- range .Values.ingress.hosts -}}
+{{- $hosts = append $hosts . -}}
+{{- end -}}
+{{- end -}}
+{{- $out := list -}}
+{{- range $hosts -}}
+{{- $out = append $out (tpl (toString .) $) -}}
+{{- end -}}
+{{- toYaml (dict "items" (uniq $out)) -}}
+{{- end }}
+
+{{/*
+Secret the Certificate writes to: certificate.secretName, <fullname>-tls by default.
+*/}}
+{{- define "backend.certificateSecretName" -}}
+{{- .Values.certificate.secretName | default (printf "%s-tls" (include "backend.fullname" .)) -}}
+{{- end }}
+
+{{/*
+Secret the synthesized ListenerSet listeners terminate TLS with: listenerset.tls.secretName,
+the Certificate secret by default.
+*/}}
+{{- define "backend.listenerSecretName" -}}
+{{- .Values.listenerset.tls.secretName | default (include "backend.certificateSecretName" .) -}}
 {{- end }}
