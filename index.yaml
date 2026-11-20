@@ -13,6 +13,15 @@ entries:
     version: 0.1.1
   application:
   - apiVersion: v2
+    created: "2026-11-20T04:01:23.723574877Z"
+    description: A Helm chart for Kubernetes
+    digest: 012484cd132ca8e7cdc9e655dbd1b0fadac834476856043b3b0d3079464e4420
+    name: application
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/application-0.7.0/application-0.7.0.tgz
+    version: 0.7.0
+  - apiVersion: v2
     created: "2026-11-17T08:07:01.502218428Z"
     description: A Helm chart for Kubernetes
     digest: b2840730412c0041e4ace3c5a92c3c52fbfebb9fef3f0357ecb053990ebcd7ea
@@ -298,6 +307,15 @@ entries:
     version: 0.0.1
   opentelemetry:
   - apiVersion: v2
+    created: "2026-11-20T04:01:23.884938787Z"
+    description: A Helm chart for OpenTelemetry Collector and Instrumentation
+    digest: 3ec52ddc2dedf49de603c8effce05e042631ef95af05ebf74ba7e22724b1f2cd
+    name: opentelemetry
+    type: application
+    urls:
+    - https://github.com/hodfords-solutions/helm-charts/releases/download/opentelemetry-0.1.0/opentelemetry-0.1.0.tgz
+    version: 0.1.0
+  - apiVersion: v2
     created: "2026-07-28T04:51:39.855955258Z"
     description: A Helm chart for OpenTelemetry Collector and Instrumentation
     digest: bc196a103c1675886191ad9168412cbdafaf40a62b1c0fc34225e5a6b4635967
@@ -356,4 +374,4 @@ entries:
     urls:
     - https://github.com/hodfords-solutions/helm-charts/releases/download/rspamd-0.0.1/rspamd-0.0.1.tgz
     version: 0.0.1
-generated: "2026-11-17T08:07:01.502342254Z"
+generated: "2026-11-20T04:01:23.885019483Z"
