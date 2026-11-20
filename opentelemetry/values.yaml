@@ -74,7 +74,77 @@ collector:
     # maxReplicas: 5
     # targetCPUUtilization: 80
 
+  # Passed as-is to the operator (spec.ingress), which only knows Ingress/OpenShift Route.
+  # Use certificate/listenerset/httproute below for the Istio gateway (Gateway API).
   ingress: {}
+
+  # Gateway API (Istio ingress gateway), same layout as the argo-cd chart's
+  # server.certificate / server.listenerset / server.httproute. Hostnames default to
+  # ingress.hostname. The shared Gateway must allow this namespace in
+  # spec.allowedListeners and, for the redirect / HTTP-01 routes, in its HTTP listener.
+  certificate:
+    enabled: false
+    # commonName, defaults to the first hostname
+    domain: ''
+    additionalHosts: []
+    # Defaults to <name>-tls
+    secretName: ''
+    duration: ''
+    renewBefore: ''
+    issuer:
+      group: ''
+      kind: ClusterIssuer
+      name: ''
+    privateKey: {}
+    annotations: {}
+
+  listenerset:
+    enabled: false
+    labels: {}
+    annotations: {}
+    # The shared Gateway, exactly one
+    parentRef: {}
+      # name: tool-gateway
+      # namespace: istio-ingress
+    # One listener per hostname, suffixed with the index from the second one on
+    listenerName: https
+    port: 443
+    protocol: HTTPS
+    tls:
+      enabled: true
+      mode: Terminate
+      # Defaults to the Certificate secret
+      secretName: ''
+    allowedRoutes:
+      namespaces:
+        from: Same
+    # Used verbatim (templated) instead of the synthesized listeners
+    listeners: []
+
+  # OTLP/HTTP only, OTLP/gRPC would need a GRPCRoute
+  httproute:
+    enabled: false
+    labels: {}
+    annotations: {}
+    # Defaults to this release's ListenerSet
+    parentRefs: []
+    hostnames: []
+    # Port of the <name>-collector Service (4318 = otlp-http)
+    servicePort: 4318
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+    httpsRedirect:
+      enabled: false
+      statusCode: 301
+      # The Gateway's plain HTTP listener
+      parentRefs: []
+        # - name: tool-gateway
+        #   namespace: istio-ingress
+        #   sectionName: http
+
   targetAllocator: {}
   observability: {}
 

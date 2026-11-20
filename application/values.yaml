@@ -164,6 +164,100 @@ ingress:
   serviceName:
   servicePort:
 
+## Gateway API (Istio ingress gateway), the replacement for `ingress`. Same layout as the
+## argo-cd chart's server.certificate / server.listenerset / server.httproute:
+## the app brings its own HTTPS listener (ListenerSet) and Let's Encrypt cert (Certificate)
+## onto a shared Gateway, plus the HTTPRoute(s).
+## Hostnames default to ingress.host + ingress.hosts, backend to ingress.serviceName /
+## ingress.servicePort, so a release migrates by turning ingress off and these three on.
+## The shared Gateway must allow this namespace in spec.allowedListeners and, for the
+## redirect / HTTP-01 routes, in its plain HTTP listener's allowedRoutes.
+
+## @param certificate.enabled Create a cert-manager Certificate for the gateway hostnames
+## @param certificate.domain commonName, defaults to the first hostname
+## @param certificate.additionalHosts Extra SANs, next to every gateway hostname
+## @param certificate.secretName Secret the cert is written to, defaults to <fullname>-tls
+## @param certificate.issuer.kind Issuer or ClusterIssuer
+## @param certificate.issuer.name Issuer name, e.g. letsencrypt-prod-cluster
+##
+certificate:
+  enabled: false
+  domain: ""
+  additionalHosts: []
+  secretName: ""
+  duration: ""
+  renewBefore: ""
+  issuer:
+    group: ""
+    kind: ClusterIssuer
+    name: ""
+  privateKey: {}
+  usages: []
+  annotations: {}
+  secretTemplate: {}
+
+## @param listenerset.enabled Create a ListenerSet attaching HTTPS listeners to a shared Gateway
+## @param listenerset.parentRef Gateway to attach to (exactly one), e.g. name: tool-gateway, namespace: istio-ingress
+## @param listenerset.listenerName Listener name, suffixed with the index from the second hostname on
+## @param listenerset.tls.secretName TLS secret of the listeners, defaults to the Certificate secret
+## @param listenerset.listeners Listeners used verbatim (templated), the synthesized ones are skipped
+## One listener is synthesized per gateway hostname
+##
+listenerset:
+  enabled: false
+  labels: {}
+  annotations: {}
+  parentRef: {}
+  #  name: tool-gateway
+  #  namespace: istio-ingress
+  listenerName: https
+  port: 443
+  protocol: HTTPS
+  tls:
+    enabled: true
+    mode: Terminate
+    secretName: ""
+  allowedRoutes:
+    namespaces:
+      from: Same
+  listeners: []
+
+## @param httproute.enabled Create an HTTPRoute to the application service
+## @param httproute.parentRefs Gateway/listeners to attach to, defaults to this release's ListenerSet
+## @param httproute.hostnames Hostnames, defaults to ingress.host + ingress.hosts (templated)
+## @param httproute.serviceName Service to route to, defaults to ingress.serviceName
+## @param httproute.servicePort Port to route to, defaults to ingress.servicePort
+## @param httproute.rules Rules (matches/filters/timeouts), each one routes to the backend above
+## @param httproute.httpsRedirect.enabled Also create an HTTP -> HTTPS redirect route
+## @param httproute.httpsRedirect.parentRefs The Gateway's plain HTTP listener, required when enabled
+##
+httproute:
+  enabled: false
+  labels: {}
+  annotations: {}
+  parentRefs: []
+  #  - name: tool-gateway
+  #    namespace: istio-ingress
+  #    sectionName: https
+  hostnames: []
+  serviceName:
+  servicePort:
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      # filters: []
+      # timeouts:
+      #   request: 60s
+  httpsRedirect:
+    enabled: false
+    statusCode: 301
+    parentRefs: []
+    #  - name: tool-gateway
+    #    namespace: istio-ingress
+    #    sectionName: http
+
 ## @param imagePullSecrets Extra Image pull secrets
 ##
 imagePullSecrets: []

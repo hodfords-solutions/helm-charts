@@ -1,0 +1,40 @@
+{{- if and .Values.collector.enabled .Values.collector.certificate.enabled -}}
+{{- $values := .Values.collector.certificate -}}
+{{- $hosts := (include "collector.gatewayHostnames" . | fromYaml).items -}}
+{{- $domain := $values.domain | default (first $hosts) -}}
+{{- if not $domain -}}
+{{- fail "collector.certificate.enabled requires collector.certificate.domain, collector.httproute.hostnames or collector.ingress.hostname" -}}
+{{- end -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "name" . }}
+  namespace: {{ include "collector.namespace" . }}
+  {{- with $values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  secretName: {{ include "collector.certificateSecretName" . }}
+  commonName: {{ $domain | quote }}
+  dnsNames:
+    {{- range uniq (concat (list $domain) $hosts $values.additionalHosts) }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- with $values.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with $values.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
+  issuerRef:
+    {{- with $values.issuer.group }}
+    group: {{ . | quote }}
+    {{- end }}
+    kind: {{ $values.issuer.kind | quote }}
+    name: {{ required "collector.certificate.issuer.name is required" $values.issuer.name | quote }}
+  {{- with $values.privateKey }}
+  privateKey:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

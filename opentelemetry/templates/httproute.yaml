@@ -1,0 +1,88 @@
+{{- if and .Values.collector.enabled .Values.collector.httproute.enabled -}}
+{{- $values := .Values.collector.httproute -}}
+{{- $name := include "name" . -}}
+{{- $namespace := include "collector.namespace" . -}}
+{{- $hosts := (include "collector.gatewayHostnames" . | fromYaml).items -}}
+{{- if and (not $values.parentRefs) (not .Values.collector.listenerset.enabled) -}}
+{{- fail "collector.httproute.enabled requires collector.httproute.parentRefs or collector.listenerset.enabled" -}}
+{{- end -}}
+# OTLP/HTTP of the collector (Service <name>-collector created by the operator)
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace }}
+  {{- with $values.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $values.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- if $values.parentRefs }}
+    {{- toYaml $values.parentRefs | nindent 4 }}
+    {{- else }}
+    {{- /* No sectionName: attach to every listener of the ListenerSet (one per hostname) */}}
+    - group: gateway.networking.k8s.io
+      kind: ListenerSet
+      name: {{ $name }}
+    {{- end }}
+  {{- with $hosts }}
+  hostnames:
+    {{- range . }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $values.rules }}
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: {{ include "collector.serviceName" $ }}
+          port: {{ $values.servicePort }}
+          weight: 1
+      {{- with .matches }}
+      matches:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .filters }}
+      filters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .timeouts }}
+      timeouts:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- if $values.httpsRedirect.enabled }}
+{{- if not $values.httpsRedirect.parentRefs }}
+{{- fail "collector.httproute.httpsRedirect.enabled requires collector.httproute.httpsRedirect.parentRefs (the Gateway's plain HTTP listener)" -}}
+{{- end }}
+---
+# HTTP -> HTTPS redirect on the Gateway's shared HTTP listener. cert-manager's HTTP-01
+# solver routes (Exact /.well-known/acme-challenge/<token>) for the same host win over it.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-http-redirect" $name | trunc 63 | trimSuffix "-" }}
+  namespace: {{ $namespace }}
+spec:
+  parentRefs:
+    {{- toYaml $values.httpsRedirect.parentRefs | nindent 4 }}
+  {{- with $hosts }}
+  hostnames:
+    {{- range . }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: {{ $values.httpsRedirect.statusCode }}
+{{- end }}
+{{- end }}
